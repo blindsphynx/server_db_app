@@ -1,3 +1,4 @@
+from tabulate import tabulate
 import psycopg2
 
 
@@ -6,21 +7,23 @@ class Server:
         self.connection = psycopg2.connect(dbname='postgres1', user='user', password='pyro127',
                                            host='localhost', port='5432')
         self.connection.autocommit = True
-
-    def connectToDatabase(self):
-        pass
+        self.cursor = self.connection.cursor()
+        print("[INFO] PostgreSQL connection established")
 
     def shutdown(self):
         self.connection.close()
+        print("[INFO] PostgreSQL connection closed")
 
     def writeToDatabase(self, query):
-        pass
+        self.cursor.execute(query)
+        records = self.cursor.fetchall()
 
     def readFromDatabase(self, query):
-        cursor = self.connection.cursor()
-        cursor.execute(query)
-        records = cursor.fetchall()
-        print("id\tname\tpoints")
+        self.cursor.execute(query)
+        records = self.cursor.fetchall()
+        table = []
         for line in records:
-            print(*line, sep="\t")
-        cursor.close()
+            table.append([*line])
+
+        print(tabulate(table, headers=["id", "name", "year", "photo", "course", "class"], tablefmt='orgtbl'))
+        self.cursor.close()
