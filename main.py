@@ -1,7 +1,10 @@
-from http_server import Server
+from src.http_server import Server
 
-server = Server()
-query = 'SELECT * FROM students'
-server.readFromDatabase(query)
-
-server.shutdown()
+if __name__ == '__main__':
+    server = Server()
+    server.run()
+    # server.connect_to_postgesql()
+    # my_query = "SELECT * FROM students"
+    # server.readFromDatabase(my_query)
+    # server.shutdown_DB_connection()
+    # sys.exit(server.close())
