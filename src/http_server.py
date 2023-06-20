@@ -15,9 +15,8 @@ class Server(QTcpServer):
     def enableNewConnection(self):
         if self.hasPendingConnections():
             print("Incoming Connection...")
-            # self.dealCommunication()
-            self.newConnection.connect(self.dealCommunication)
-            # self.incomingConnection(self.dealCommunication())
+            self.dealCommunication()
+            # self.newConnection.connect(self.dealCommunication)
 
     def run(self):
         if self.listen(self.address, self.port):
