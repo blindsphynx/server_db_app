@@ -1,5 +1,5 @@
 from PyQt5.QtCore import QByteArray, QDataStream, QIODevice
-from PyQt5.QtNetwork import QHostAddress, QTcpServer, QTcpSocket
+from PyQt5.QtNetwork import QHostAddress, QTcpServer
 from tabulate import tabulate
 import psycopg2
 
@@ -12,25 +12,22 @@ class Server(QTcpServer):
         self.connection = None
         self.cursor = None
 
-    def enableNewConnection(self):
-        if self.hasPendingConnections():
-            print("Incoming Connection...")
-            self.dealCommunication()
-            # self.newConnection.connect(self.dealCommunication)
-
     def run(self):
         if self.listen(self.address, self.port):
-            print(f"Server is listening on port: {self.port}")
-            if self.waitForNewConnection(10000):
-                self.enableNewConnection()
+            print(f"Server is listening on port {self.port}")
+            if self.waitForNewConnection(3000):
+                print("Incoming Connection...")
+                self.newConnection.connect(self.dealCommunication)
+                # self.dealCommunication()
         else:
             print("Server couldn't wake up")
+            self.close()
 
     def dealCommunication(self):
         print("Client connection established")
         clientConnection = self.nextPendingConnection()
         print(f"Connection is open: {clientConnection.isOpen()}")
-        clientConnection.waitForReadyRead(1000)
+        clientConnection.waitForReadyRead()
 
         block = QByteArray()
         out = QDataStream(block, QIODevice.ReadWrite)
@@ -44,7 +41,7 @@ class Server(QTcpServer):
         out.device().seek(0)
         out.writeUInt16(block.size() - 2)
 
-        clientConnection.waitForReadyRead(1000)
+        clientConnection.waitForReadyRead()
         received_data = clientConnection.readAll()
         print(str(received_data, encoding='ascii'))
 

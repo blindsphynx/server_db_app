@@ -1,24 +1,29 @@
 from PyQt5.QtCore import QDataStream, QIODevice
+from PyQt5.QtWidgets import QApplication, QDialog
 from PyQt5.QtNetwork import QTcpSocket, QAbstractSocket
+import sys
 
 
-class Client:
+class Client(QDialog):
     def __init__(self):
-        self.tcpSocket = QTcpSocket()
+        super().__init__()
+        self.tcpSocket = QTcpSocket(self)
         self.blockSize = 0
-        # self.tcpSocket.error.connect(self.displayError)
         print("Client was created")
+        self.makeRequest()
+        self.tcpSocket.waitForConnected()
+        self.tcpSocket.write(b'hello from client')
+        print("message sent!")
+        self.tcpSocket.readyRead.connect(self.dealCommunication)
+        self.tcpSocket.error.connect(self.displayError)
 
     def makeRequest(self):
         host = '127.0.0.1'
         port = 8000
         self.tcpSocket.connectToHost(host, port, QIODevice.ReadWrite)
-        if self.tcpSocket.waitForConnected(1000):
-            self.tcpSocket.write(b'hello from client')
-            self.tcpSocket.readyRead.connect(self.dealCommunication)
-            print("message sent!")
 
     def dealCommunication(self):
+        print("check")
         received_data = QDataStream(self.tcpSocket)
         received_data.setVersion(QDataStream.Qt_5_0)
         if self.blockSize == 0:
@@ -37,5 +42,6 @@ class Client:
 
 
 if __name__ == '__main__':
+    app = QApplication(sys.argv)
     client = Client()
-    client.makeRequest()
+    sys.exit(client.exec_())
