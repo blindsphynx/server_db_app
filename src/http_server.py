@@ -15,10 +15,10 @@ class Server(QTcpServer):
     def run(self):
         if self.listen(self.address, self.port):
             print(f"Server is listening on port {self.port}")
-            if self.waitForNewConnection(3000):
+            if self.waitForNewConnection(5000):
                 print("Incoming Connection...")
                 self.newConnection.connect(self.dealCommunication)
-                # self.dealCommunication()
+                self.dealCommunication()
         else:
             print("Server couldn't wake up")
             self.close()
@@ -27,26 +27,16 @@ class Server(QTcpServer):
         print("Client connection established")
         clientConnection = self.nextPendingConnection()
         print(f"Connection is open: {clientConnection.isOpen()}")
-        clientConnection.waitForReadyRead()
 
-        block = QByteArray()
-        out = QDataStream(block, QIODevice.ReadWrite)
-
-        out.setVersion(QDataStream.Qt_5_0)
-        out.writeUInt16(0)
         message = "message from server!"
         message = bytes(message, encoding='ascii')
+        clientConnection.write(message)
 
-        out.writeString(message)
-        out.device().seek(0)
-        out.writeUInt16(block.size() - 2)
-
-        clientConnection.waitForReadyRead()
+        print("Client connection ready: ", clientConnection.waitForReadyRead())
         received_data = clientConnection.readAll()
         print(str(received_data, encoding='ascii'))
 
         clientConnection.disconnected.connect(clientConnection.deleteLater)
-        clientConnection.write(block)
         clientConnection.disconnectFromHost()
 
     def connect_to_postgesql(self):

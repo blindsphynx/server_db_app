@@ -1,5 +1,5 @@
 from PyQt5.QtCore import QDataStream, QIODevice
-from PyQt5.QtWidgets import QApplication, QDialog
+from PyQt5.QtWidgets import QApplication, QDialog, QVBoxLayout, QTextEdit, QLineEdit, QWidget
 from PyQt5.QtNetwork import QTcpSocket, QAbstractSocket
 import sys
 
@@ -11,11 +11,13 @@ class Client(QDialog):
         self.blockSize = 0
         print("Client was created")
         self.makeRequest()
-        self.tcpSocket.waitForConnected()
-        self.tcpSocket.write(b'hello from client')
-        print("message sent!")
-        self.tcpSocket.readyRead.connect(self.dealCommunication)
-        self.tcpSocket.error.connect(self.displayError)
+        if self.tcpSocket.waitForConnected():
+            print("Connected to the host")
+            self.sendMessage()
+            self.tcpSocket.readyRead.connect(self.dealCommunication)
+            self.tcpSocket.error.connect(self.displayError)
+        else:
+            print("Cannot connect to the host")
 
     def makeRequest(self):
         host = '127.0.0.1'
@@ -23,16 +25,18 @@ class Client(QDialog):
         self.tcpSocket.connectToHost(host, port, QIODevice.ReadWrite)
 
     def dealCommunication(self):
-        print("check")
-        received_data = QDataStream(self.tcpSocket)
-        received_data.setVersion(QDataStream.Qt_5_0)
         if self.blockSize == 0:
+            # print("Received bytes: ", self.tcpSocket.bytesAvailable())
             if self.tcpSocket.bytesAvailable() < 2:
                 return
-            self.blockSize = received_data.readUInt16()
+            self.blockSize = self.tcpSocket.bytesAvailable()
         if self.tcpSocket.bytesAvailable() < self.blockSize:
             return
-        print(str(received_data.readString(), encoding='ascii'))
+        print(str(self.tcpSocket.read(100), encoding='ascii'))
+
+    def sendMessage(self):
+        self.tcpSocket.write(b'hello from client')
+        # print("message sent!")
 
     def displayError(self, socketError):
         if socketError == QAbstractSocket.RemoteHostClosedError:
