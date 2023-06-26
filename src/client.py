@@ -1,5 +1,5 @@
 import json
-from PyQt5.QtWebChannel import QWebChannel
+from PyQt5.QtWebEngineCore import QWebEngineHttpRequest
 from PyQt5.QtCore import QDataStream, QIODevice, QUrl, QByteArray
 from PyQt5.QtWidgets import QApplication, QDialog, QVBoxLayout, QTextEdit, QLineEdit, QWidget, QMessageBox, QPushButton, \
     QInputDialog
@@ -47,29 +47,19 @@ class Client(QDialog):
         else:
             print(self, "The following error occurred: %s." % self.tcpSocket.errorString())
 
-
-def postRequest(self):
-    self.url = QUrl()
-    self.req = QWebEngineHttpRequest()
-
-    self.url.setScheme("http")
-    self.url.setHost("stackoverflow")
-    self.url.setPath("/something/somethingelse")
-
-    self.req.setUrl(self.url)
-    self.req.setMethod(QWebEngineHttpRequest.Post)
-    self.req.setHeader(QByteArray(b'Content-Type'), QByteArray(b'application/json'))
-
-    params = {"something": value, "test": True, "number": 5}
-
-    self.req.setPostData(bytes(json.dumps(params), 'utf-8'))
-
-    return self.req
+    def getRequest(self):
+        self.url = QUrl("http://localhost:8000")
+        self.request = QWebEngineHttpRequest()
+        self.request.setUrl(self.url)
+        self.request.setMethod(QWebEngineHttpRequest.Get)
+        # value = ""
+        # params = {"something": value, "test": True, "number": 5}
+        # self.request.setPostData(bytes(json.dumps(params), 'utf-8'))
+        print(self.request.headers())
 
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     client = Client()
-
-
+    client.getRequest()
     sys.exit(client.exec_())
