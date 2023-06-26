@@ -1,4 +1,3 @@
-from PyQt5.QtCore import QByteArray, QDataStream, QIODevice
 from PyQt5.QtNetwork import QHostAddress, QTcpServer
 from tabulate import tabulate
 import psycopg2
