@@ -1,4 +1,8 @@
 from PyQt5.QtNetwork import QHostAddress, QTcpServer
+from flask import request
+# The request object holds all incoming data from the request,
+# which includes the mimetype, referrer, IP address, raw data,
+# HTTP method, and headers, among other things.
 from tabulate import tabulate
 import psycopg2
 
