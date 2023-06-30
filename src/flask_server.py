@@ -1,18 +1,10 @@
-from flask import Flask, request, redirect, url_for, jsonify
+from flask import Flask, request, jsonify
 import psycopg2
 from tabulate import tabulate
 
 server = Flask(__name__)
 DBconnection = [None]
 DBcursor = [None]
-data = {"language": "Python",
-        "framework": "Flask",
-        "versions": {
-            "python": "3.9.0",
-            "flask": "1.1.2"
-        },
-        "examples": ["query", "form", "json"],
-        "boolean_test": True}
 
 
 @server.route('/')
@@ -27,10 +19,21 @@ def get():
     return table, 200
 
 
-@server.route('/post-data')
+@server.route('/post-data', methods=['POST'])
 def post():
-    new_data = request.get_data()
-    return jsonify(new_data), 201
+    if request.method == 'POST':
+        new_data = request.get_json()
+        print("JSON: ", new_data)
+        name = new_data["name"]
+        year = new_data["year"]
+        course = new_data["course"]
+        group = new_data["group"]
+        print("JSON: ", name, year, course, group)
+        print()
+    # query = "INSERT INTO students(id, name, year, course, class) " \
+    #         "VALUES(6, " + " " + ");"
+    # writeToDatabase(query, cursor=DBcursor)
+        return jsonify(new_data), 201
 
 
 def connect_to_postgesql(connection, cursor):
