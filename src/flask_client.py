@@ -1,6 +1,7 @@
 from PyQt5.QtWidgets import QApplication, QDialog
 import requests
 import sys
+import json
 
 
 class Client(QDialog):
@@ -11,21 +12,21 @@ class Client(QDialog):
 
     def getRequest(self):
         req = requests.get(self.host + "/get-data")
-        print(req.headers)
+        # print(req.headers)
         print(req.text)
 
     def postRequest(self, new_data):
-        hdrs = {'Content-type': 'application/json; charset=utf-8', 'Accept': 'application/json'}
+        hdrs = {'Content-type': 'application/json; charset=utf-8',
+                'Accept': 'application/json, */*'}
         req = requests.post(self.host + "/post-data", data=new_data, headers=hdrs)
         print(req.headers)
         print(req.text)
 
 
 if __name__ == '__main__':
-    data = {"name": "Soldatova Kira",
-            "year": 2004,
-            "course": 1,
-            "group": 224}
+    f = open("src/file.json")
+    data = json.load(f)
+    print(data)
     app = QApplication(sys.argv)
     client = Client()
     client.postRequest(data)

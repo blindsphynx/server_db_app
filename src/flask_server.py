@@ -22,18 +22,24 @@ def get():
 @server.route('/post-data', methods=['POST'])
 def post():
     if request.method == 'POST':
-        new_data = request.get_json()
-        print("JSON: ", new_data)
-        name = new_data["name"]
-        year = new_data["year"]
-        course = new_data["course"]
-        group = new_data["group"]
-        print("JSON: ", name, year, course, group)
-        print()
-    # query = "INSERT INTO students(id, name, year, course, class) " \
-    #         "VALUES(6, " + " " + ");"
-    # writeToDatabase(query, cursor=DBcursor)
-        return jsonify(new_data), 201
+        name = '"Soldatova Kira"'
+        year = 2004
+        course = 1
+        group = 224
+        query = f"INSERT INTO students(id, name, year, course, class) VALUES(6, {name}, {year}, {course}, {group});"
+        writeToDatabase(query, cursor=DBcursor)
+        return jsonify(id=6, name=name, year=year, course=course, group_=group), 201
+        # new_data = request.get_json(force=True)
+        # if new_data:
+        # name = new_data["name"]
+        # year = new_data["year"]
+        # course = new_data["course"]
+        # group = new_data["group"]
+        # print("JSON: ", name, year, course, group)
+        # query = f"INSERT INTO students(id, name, year, course, group_) VALUES(6, {name}, {year}, {course}, {group});"
+        # writeToDatabase(query, cursor=DBcursor)
+        # return jsonify(new_data), 201
+        # return None
 
 
 def connect_to_postgesql(connection, cursor):
@@ -62,4 +68,4 @@ def readFromDatabase(query, cursor):
     for line in records:
         table.append([*line])
     cursor[0].close()
-    return tabulate(table, headers=["id", "name", "year", "photo", "course", "class"], tablefmt='orgtbl')
+    return tabulate(table, headers=["id", "name", "year", "photo", "course", "group_"], tablefmt='orgtbl')
