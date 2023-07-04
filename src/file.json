@@ -1,6 +1,7 @@
 {
-  "name": "Soldatova Kira",
-  "year": 2004,
-  "course": 1,
-  "group": 224
+  "name": "New Student",
+  "year": 2003,
+  "picture": "picture",
+  "course": 2,
+  "gruppa": 666
 }

@@ -12,13 +12,11 @@ class Client(QDialog):
 
     def getRequest(self):
         req = requests.get(self.host + "/get-data")
-        # print(req.headers)
         print(req.text)
 
     def postRequest(self, new_data):
-        hdrs = {'Content-type': 'application/json; charset=utf-8',
-                'Accept': 'application/json, */*'}
-        req = requests.post(self.host + "/post-data", data=new_data, headers=hdrs)
+        hdrs = {"Content-Type": "application/json; charset=utf-8", "Accept": "application/json"}
+        req = requests.post(self.host + "/post-data", json=new_data, headers=hdrs)
         print(req.headers)
         print(req.text)
 
@@ -26,7 +24,7 @@ class Client(QDialog):
 if __name__ == '__main__':
     f = open("src/file.json")
     data = json.load(f)
-    print(data)
+    print("JSON: ", data)
     app = QApplication(sys.argv)
     client = Client()
     client.postRequest(data)

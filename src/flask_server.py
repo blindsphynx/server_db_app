@@ -22,24 +22,16 @@ def get():
 @server.route('/post-data', methods=['POST'])
 def post():
     if request.method == 'POST':
-        name = '"Soldatova Kira"'
-        year = 2004
-        course = 1
-        group = 224
-        query = f"INSERT INTO students(id, name, year, course, class) VALUES(6, {name}, {year}, {course}, {group});"
+        new_data = request.get_json(force=True)
+        name = new_data['name']
+        year = new_data['year']
+        picture = new_data['picture']
+        course = new_data['course']
+        gruppa = new_data['gruppa']
+        query = f"INSERT INTO students(id, name, year, photo, course, gruppa) " \
+                f"VALUES(6, '{name}', {year}, '{picture}', {course}, {gruppa});"
         writeToDatabase(query, cursor=DBcursor)
-        return jsonify(id=6, name=name, year=year, course=course, group_=group), 201
-        # new_data = request.get_json(force=True)
-        # if new_data:
-        # name = new_data["name"]
-        # year = new_data["year"]
-        # course = new_data["course"]
-        # group = new_data["group"]
-        # print("JSON: ", name, year, course, group)
-        # query = f"INSERT INTO students(id, name, year, course, group_) VALUES(6, {name}, {year}, {course}, {group});"
-        # writeToDatabase(query, cursor=DBcursor)
-        # return jsonify(new_data), 201
-        # return None
+        return jsonify(id=6, name=name, year=year, picture=picture, course=course, gruppa=gruppa), 201
 
 
 def connect_to_postgesql(connection, cursor):
@@ -57,7 +49,6 @@ def shutdown_DB_connection(connection):
 
 def writeToDatabase(query, cursor):
     cursor[0].execute(query)
-    records = cursor[0].fetchall()
     print("[INFO] Data was added to the database")
 
 
@@ -68,4 +59,4 @@ def readFromDatabase(query, cursor):
     for line in records:
         table.append([*line])
     cursor[0].close()
-    return tabulate(table, headers=["id", "name", "year", "photo", "course", "group_"], tablefmt='orgtbl')
+    return tabulate(table, headers=["id", "name", "year", "photo", "course", "group"], tablefmt='orgtbl')
