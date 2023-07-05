@@ -1,98 +1,81 @@
-# https://www.pythonguis.com/faq/looking-for-app-recommendations/
-
 import sys
-from PyQt5.QtCore import QSize, Qt
-from PyQt5.QtSql import QSqlDatabase, QSqlTableModel
+import psycopg2
+from tabulate import tabulate
+from PyQt5.QtCore import Qt
+from PyQt5.QtSql import QSqlDatabase, QSqlTableModel, QSqlQuery
 from PyQt5.QtWidgets import (
     QApplication,
-    QComboBox,
-    QDataWidgetMapper,
-    QDateTimeEdit,
-    QFormLayout,
-    QHBoxLayout,
-    QLabel,
-    QLineEdit,
     QMainWindow,
-    QPushButton,
-    QVBoxLayout,
-    QWidget,
-)
-
-db = QSqlDatabase("QSQLITE")
-db.setDatabaseName("test.sqlite")
-# Create some dummy data.
-db.open()
-db.exec_(
-    "create table if not exists mytable (title string, kind string, created datetime);"
-)
-db.exec_(
-    "insert into mytable (title, kind, created) values ('first title', 'Two', datetime('2020-06-02 12:45:11') );"
-)
-db.exec_(
-    "insert into mytable (title, kind, created) values ('2nd item', 'Three', datetime('2019-06-02 12:45:11') );"
+    QMessageBox,
+    QTableView, QTableWidget, QTableWidgetItem,
 )
 
 
-class MainWindow(QMainWindow):
-    def __init__(self):
-        super().__init__()
+class Database(QMainWindow):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Database Example")
+        self.resize(750, 450)
+        self.connection = QSqlDatabase.addDatabase("QPSQL")
+        # Set up the view and load the data
+        self.view = QTableWidget()
+        self.view.setColumnCount(6)
+        self.view.setHorizontalHeaderLabels(["ID", "Name", "Year", "Photo", "Course", "Group"])
+        query = QSqlQuery("SELECT * FROM students")
+        while query.next():
+            rows = self.view.rowCount()
+            self.view.setRowCount(rows + 1)
+            self.view.setItem(rows, 0, QTableWidgetItem(query.value(0)))
+            self.view.setItem(rows, 1, QTableWidgetItem(query.value(1)))
+            self.view.setItem(rows, 2, QTableWidgetItem(query.value(2)))
+            self.view.setItem(rows, 3, QTableWidgetItem(query.value(3)))
+            self.view.setItem(rows, 4, QTableWidgetItem(query.value(4)))
+            self.view.setItem(rows, 5, QTableWidgetItem(query.value(5)))
+        self.model = QSqlTableModel(self)
+        self.model.setTable("Students")
+        if self.createConnection():
+            self.showTable()
 
-        form = QFormLayout()
+        self.view.resizeColumnsToContents()
+        self.setCentralWidget(self.view)
 
-        # Define fields.
-        self.title = QLineEdit()
+    def createConnection(self):
+        self.connection = QSqlDatabase.addDatabase("QPSQL")
+        self.connection.setDatabaseName("postgres1")
+        self.connection.setHostName('localhost')
+        self.connection.setUserName('user')
+        self.connection.setPassword('pyro127')
+        if not self.connection.open():
+            QMessageBox.critical(
+                None,
+                "Error!",
+                "Unable to connect a database\n\n"
+                "Database Error: %s" % self.connection.lastError().databaseText(),
+            )
+            return False
+        print("[INFO] PostgreSQL connection established")
+        return True
 
-        self.kind = QComboBox()
-        self.kind.addItems(["One", "Two", "Three"])
+    def showTable(self):
+        self.view = QTableWidget()
+        self.view.setColumnCount(6)
+        self.view.setHorizontalHeaderLabels(["ID", "Name", "Year", "Photo", "Course", "Group"])
+        query = QSqlQuery("SELECT * FROM students")
 
-        self.date = QDateTimeEdit()
-
-        form.addRow(QLabel("Title"), self.title)
-        form.addRow(QLabel("Type of item"), self.kind)
-        form.addRow(QLabel("Date"), self.date)
-
-        self.model = QSqlTableModel(db=db)
-
-        self.mapper = QDataWidgetMapper()  # Syncs widgets to the database.
-        self.mapper.setModel(self.model)
-
-        self.mapper.addMapping(self.title, 0)  # Map to column number
-        self.mapper.addMapping(self.kind, 1)
-        self.mapper.addMapping(self.date, 2)
-
-        self.model.setTable("mytable")
-        self.model.select()  # Query the database
-
-        self.mapper.toFirst()  # Jump to first record
-
-        self.setMinimumSize(QSize(500, 500))
-
-        controls = QHBoxLayout()
-
-        prev_rec = QPushButton("Previous")
-        prev_rec.clicked.connect(self.mapper.toPrevious)
-
-        next_rec = QPushButton("Next")
-        next_rec.clicked.connect(self.mapper.toNext)
-
-        save_rec = QPushButton("Save Changes")
-        save_rec.clicked.connect(self.mapper.submit)
-
-        controls.addWidget(prev_rec)
-        controls.addWidget(next_rec)
-        controls.addWidget(save_rec)
-
-        layout = QVBoxLayout()
-
-        layout.addLayout(form)
-        layout.addLayout(controls)
-
-        widget = QWidget()
-        widget.setLayout(layout)
-        self.setCentralWidget(widget)
+        while query.next():
+            rows = self.view.rowCount()
+            self.view.setRowCount(rows + 1)
+            self.view.setItem(rows, 0, QTableWidgetItem(str(query.value(0))))
+            self.view.setItem(rows, 1, QTableWidgetItem(query.value(1)))
+            self.view.setItem(rows, 2, QTableWidgetItem(str(query.value(2))))
+            self.view.setItem(rows, 3, QTableWidgetItem(query.value(3)))
+            self.view.setItem(rows, 4, QTableWidgetItem(str(query.value(4))))
+            self.view.setItem(rows, 5, QTableWidgetItem(str(query.value(5))))
+        self.view.resizeColumnsToContents()
+        self.setCentralWidget(self.view)
 
 
 app = QApplication(sys.argv)
-window = MainWindow()
-window.show()
-app.exec_()
+win = Database()
+win.show()
+sys.exit(app.exec_())
