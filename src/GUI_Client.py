@@ -1,13 +1,8 @@
 import sys
-import psycopg2
-from tabulate import tabulate
-from PyQt5.QtCore import Qt
 from PyQt5.QtSql import QSqlDatabase, QSqlTableModel, QSqlQuery
 from PyQt5.QtWidgets import (
-    QApplication,
-    QMainWindow,
-    QMessageBox,
-    QTableView, QTableWidget, QTableWidgetItem,
+    QApplication, QMainWindow, QMessageBox,
+    QTableWidget, QTableWidgetItem,
 )
 
 
@@ -17,7 +12,7 @@ class Database(QMainWindow):
         self.setWindowTitle("Database Example")
         self.resize(750, 450)
         self.connection = QSqlDatabase.addDatabase("QPSQL")
-        # Set up the view and load the data
+
         self.view = QTableWidget()
         self.view.setColumnCount(6)
         self.view.setHorizontalHeaderLabels(["ID", "Name", "Year", "Photo", "Course", "Group"])
