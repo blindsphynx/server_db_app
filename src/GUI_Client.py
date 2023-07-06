@@ -1,4 +1,5 @@
 import sys
+import requests
 from PyQt5.QtSql import QSqlDatabase, QSqlTableModel, QSqlQuery
 from PyQt5.QtWidgets import (
     QApplication, QMainWindow, QMessageBox,
@@ -6,33 +7,22 @@ from PyQt5.QtWidgets import (
 )
 
 
-class Database(QMainWindow):
+class DatabaseClient(QMainWindow):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Database Example")
-        self.resize(750, 450)
+        self.resize(850, 400)
         self.connection = QSqlDatabase.addDatabase("QPSQL")
+        self.host = "http://localhost:8000/"
 
         self.view = QTableWidget()
         self.view.setColumnCount(6)
         self.view.setHorizontalHeaderLabels(["ID", "Name", "Year", "Photo", "Course", "Group"])
-        query = QSqlQuery("SELECT * FROM students")
-        while query.next():
-            rows = self.view.rowCount()
-            self.view.setRowCount(rows + 1)
-            self.view.setItem(rows, 0, QTableWidgetItem(query.value(0)))
-            self.view.setItem(rows, 1, QTableWidgetItem(query.value(1)))
-            self.view.setItem(rows, 2, QTableWidgetItem(query.value(2)))
-            self.view.setItem(rows, 3, QTableWidgetItem(query.value(3)))
-            self.view.setItem(rows, 4, QTableWidgetItem(query.value(4)))
-            self.view.setItem(rows, 5, QTableWidgetItem(query.value(5)))
+
         self.model = QSqlTableModel(self)
         self.model.setTable("Students")
         if self.createConnection():
             self.showTable()
-
-        self.view.resizeColumnsToContents()
-        self.setCentralWidget(self.view)
 
     def createConnection(self):
         self.connection = QSqlDatabase.addDatabase("QPSQL")
@@ -40,6 +30,7 @@ class Database(QMainWindow):
         self.connection.setHostName('localhost')
         self.connection.setUserName('user')
         self.connection.setPassword('pyro127')
+
         if not self.connection.open():
             QMessageBox.critical(
                 None,
@@ -48,29 +39,52 @@ class Database(QMainWindow):
                 "Database Error: %s" % self.connection.lastError().databaseText(),
             )
             return False
-        print("[INFO] PostgreSQL connection established")
         return True
 
     def showTable(self):
         self.view = QTableWidget()
         self.view.setColumnCount(6)
         self.view.setHorizontalHeaderLabels(["ID", "Name", "Year", "Photo", "Course", "Group"])
-        query = QSqlQuery("SELECT * FROM students")
+        table = self.getRequest().json()
+        print("returned JSON: ", table)
+        for i in range(5):
+            # rows = self.view.rowCount()
+            # self.view.setRowCount(rows + 1)
+            rows = self.view.columnCount()
+            self.view.setRowCount(rows - 1)
+            for num in range(5):
+                # self.view.setItem(rows, num, QTableWidgetItem(str(table.value(num))))
+                self.view.setItem(rows, num, QTableWidgetItem(str(table[num]["id"])))
+                self.view.setItem(rows, num, QTableWidgetItem(str(table[num]["name"])))
+                # self.view.setItem(rows, num, QTableWidgetItem(str(table[num]["year"])))
+                # self.view.setItem(rows, num, QTableWidgetItem(str(table[num]["photo"])))
+                # self.view.setItem(rows, num, QTableWidgetItem(str(table[num]["course"])))
+                # self.view.setItem(rows, num, QTableWidgetItem(str(table[num]["group"])))
+                # print(table[num])
 
-        while query.next():
-            rows = self.view.rowCount()
-            self.view.setRowCount(rows + 1)
-            self.view.setItem(rows, 0, QTableWidgetItem(str(query.value(0))))
-            self.view.setItem(rows, 1, QTableWidgetItem(query.value(1)))
-            self.view.setItem(rows, 2, QTableWidgetItem(str(query.value(2))))
-            self.view.setItem(rows, 3, QTableWidgetItem(query.value(3)))
-            self.view.setItem(rows, 4, QTableWidgetItem(str(query.value(4))))
-            self.view.setItem(rows, 5, QTableWidgetItem(str(query.value(5))))
         self.view.resizeColumnsToContents()
         self.setCentralWidget(self.view)
 
+    def getRequest(self):
+        req = requests.get(self.host + "/get-data")
+        # print(req.text)
+        return req
 
-app = QApplication(sys.argv)
-win = Database()
-win.show()
-sys.exit(app.exec_())
+    def postRequest(self, new_data):
+        hdrs = {"Content-Type": "application/json; charset=utf-8", "Accept": "application/json"}
+        req = requests.post(self.host + "/post-data", json=new_data, headers=hdrs)
+        print(req.headers)
+        print(req.text)
+
+
+if __name__ == '__main__':
+    # f = open("src/file.json")
+    # data = json.load(f)
+    # print("JSON: ", data)
+    app = QApplication(sys.argv)
+    client = DatabaseClient()
+    client.show()
+
+    # client.postRequest(data)
+    # client.getRequest()
+    sys.exit(app.exec_())
