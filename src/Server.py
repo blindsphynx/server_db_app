@@ -1,9 +1,7 @@
 import json
-
 from PyQt5.QtWidgets import QMessageBox
 from flask import Flask, request, jsonify
 import psycopg2
-from tabulate import tabulate
 
 server = Flask(__name__)
 DBconnection = [None]
@@ -32,9 +30,9 @@ def post():
         course = new_data['course']
         gruppa = new_data['gruppa']
         query = f"INSERT INTO students(id, name, year, photo, course, gruppa) " \
-                f"VALUES(7, '{name}', {year}, '{picture}', {course}, {gruppa});"
+                f"VALUES(6, '{name}', {year}, '{picture}', {course}, {gruppa});"
         writeToDatabase(query, DBcursor)
-        return jsonify(id=7, name=name, year=year, picture=picture, course=course, gruppa=gruppa), 201
+        return jsonify(id=6, name=name, year=year, picture=picture, course=course, gruppa=gruppa), 201
 
 
 def connect_to_postgesql(connection, cursor):
@@ -71,7 +69,6 @@ def readFromDatabase(query, cursor):
     for line in records:
         data = {"id": line[0], "name": line[1], "year": line[2], "photo": line[3], "course": line[4], "group": line[5]}
         table.append(data)
-    print(table[0])
     result = json.dumps(table)
     return result
 

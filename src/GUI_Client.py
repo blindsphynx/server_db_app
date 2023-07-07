@@ -1,11 +1,8 @@
 import sys
 import requests
 import json
-from PyQt5.QtSql import QSqlDatabase, QSqlTableModel, QSqlQuery
-from PyQt5.QtWidgets import (
-    QApplication, QMainWindow, QMessageBox,
-    QTableWidget, QTableWidgetItem,
-)
+from PyQt5.QtSql import QSqlDatabase, QSqlTableModel
+from PyQt5.QtWidgets import QApplication, QMainWindow, QTableWidget, QTableWidgetItem
 
 
 class DatabaseClient(QMainWindow):
@@ -13,7 +10,6 @@ class DatabaseClient(QMainWindow):
         super().__init__(parent)
         self.setWindowTitle("Database Example")
         self.resize(850, 400)
-        self.connection = QSqlDatabase.addDatabase("QPSQL")
         self.host = "http://localhost:8000/"
 
         self.view = QTableWidget()
@@ -22,25 +18,7 @@ class DatabaseClient(QMainWindow):
 
         self.model = QSqlTableModel(self)
         self.model.setTable("Students")
-        if self.createConnection():
-            self.showTable()
-
-    def createConnection(self):
-        self.connection = QSqlDatabase.addDatabase("QPSQL")
-        self.connection.setDatabaseName("postgres1")
-        self.connection.setHostName('localhost')
-        self.connection.setUserName('user')
-        self.connection.setPassword('pyro127')
-
-        if not self.connection.open():
-            QMessageBox.critical(
-                None,
-                "Error!",
-                "Unable to connect a database\n\n"
-                "Database Error: %s" % self.connection.lastError().databaseText(),
-            )
-            return False
-        return True
+        self.showTable()
 
     def showTable(self):
         self.view = QTableWidget()
@@ -48,7 +26,6 @@ class DatabaseClient(QMainWindow):
         self.view.setHorizontalHeaderLabels(["ID", "Name", "Year", "Photo", "Course", "Group"])
         table = self.getRequest().json()
         records = len(table)
-        print(records)
         for i in range(records):
             rows = self.view.rowCount()
             self.view.setRowCount(rows + 1)
