@@ -32,9 +32,9 @@ def post():
         course = new_data['course']
         gruppa = new_data['gruppa']
         query = f"INSERT INTO students(id, name, year, photo, course, gruppa) " \
-                f"VALUES(6, '{name}', {year}, '{picture}', {course}, {gruppa});"
+                f"VALUES(7, '{name}', {year}, '{picture}', {course}, {gruppa});"
         writeToDatabase(query, DBcursor)
-        return jsonify(id=6, name=name, year=year, picture=picture, course=course, gruppa=gruppa), 201
+        return jsonify(id=7, name=name, year=year, picture=picture, course=course, gruppa=gruppa), 201
 
 
 def connect_to_postgesql(connection, cursor):

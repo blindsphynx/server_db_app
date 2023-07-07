@@ -1,5 +1,6 @@
 import sys
 import requests
+import json
 from PyQt5.QtSql import QSqlDatabase, QSqlTableModel, QSqlQuery
 from PyQt5.QtWidgets import (
     QApplication, QMainWindow, QMessageBox,
@@ -46,29 +47,24 @@ class DatabaseClient(QMainWindow):
         self.view.setColumnCount(6)
         self.view.setHorizontalHeaderLabels(["ID", "Name", "Year", "Photo", "Course", "Group"])
         table = self.getRequest().json()
-        print("returned JSON: ", table)
-        for i in range(6):
-            # rows = self.view.rowCount()
-            # self.view.setRowCount(rows + 1)
+        records = len(table)
+        print(records)
+        for i in range(records):
             rows = self.view.rowCount()
-            print(rows)
             self.view.setRowCount(rows + 1)
-            for num in range(5):
-                # self.view.setItem(rows, num, QTableWidgetItem(str(table.value(num))))
+            for num in range(records):
                 self.view.setItem(num, 0, QTableWidgetItem(str(table[num]["id"])))
                 self.view.setItem(num, 1, QTableWidgetItem(str(table[num]["name"])))
                 self.view.setItem(num, 2, QTableWidgetItem(str(table[num]["year"])))
                 self.view.setItem(num, 3, QTableWidgetItem(str(table[num]["photo"])))
                 self.view.setItem(num, 4, QTableWidgetItem(str(table[num]["course"])))
                 self.view.setItem(num, 5, QTableWidgetItem(str(table[num]["group"])))
-                # print(table[num])
 
         self.view.resizeColumnsToContents()
         self.setCentralWidget(self.view)
 
     def getRequest(self):
         req = requests.get(self.host + "/get-data")
-        # print(req.text)
         return req
 
     def postRequest(self, new_data):
@@ -79,13 +75,11 @@ class DatabaseClient(QMainWindow):
 
 
 if __name__ == '__main__':
-    # f = open("src/file.json")
-    # data = json.load(f)
-    # print("JSON: ", data)
+    f = open("file.json")
+    data = json.load(f)
+    print("JSON: ", data)
     app = QApplication(sys.argv)
     client = DatabaseClient()
     client.show()
-
     # client.postRequest(data)
-    # client.getRequest()
     sys.exit(app.exec_())
