@@ -31,6 +31,7 @@ def post():
         gruppa = new_data['gruppa']
         query = f"INSERT INTO students(id, name, year, photo, course, gruppa) " \
                 f"VALUES(6, '{name}', {year}, '{picture}', {course}, {gruppa});"
+        # query = "delete from students where name='Petrov Petr'"
         writeToDatabase(query, DBcursor)
         return jsonify(id=6, name=name, year=year, picture=picture, course=course, gruppa=gruppa), 201
 
