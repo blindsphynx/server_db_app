@@ -2,8 +2,8 @@ import sys
 import requests
 import json
 from PyQt5 import QtCore
-from PyQt5.QtWidgets import QApplication, QTableWidget, QTableWidgetItem, QLabel, QLineEdit, QVBoxLayout, \
-    QPushButton, QWidget, QHBoxLayout
+from PyQt5.QtWidgets import QApplication, QTableWidget, QTableWidgetItem, QLabel, QLineEdit, \
+    QVBoxLayout, QPushButton, QWidget, QHBoxLayout
 
 
 class TextEdit(QWidget):
@@ -40,19 +40,22 @@ class TextEdit(QWidget):
 
     def setValues(self):
         # add names of the fields
-        self.editField1.setText(self.cells[1])
-        self.editField2.setText(self.cells[2])
+        self.editField1.setText(self.cells["name"])
+        self.editField2.setText(self.cells["year"])
         # upload image
-        self.editField3.setText(self.cells[4])
-        self.editField4.setText(self.cells[5])
+        self.editField3.setText(self.cells["course"])
+        self.editField4.setText(self.cells["group"])
 
     def insert(self, cells):
         self.cells = cells
         print("cells: ", cells)
 
     def btnPress1_Clicked(self):
-        print("New data: " + self.editField1.text())
-        # save data to json
+        if self.editField1.text():
+            print("New data: " + self.editField1.text())
+        else:
+            print("Error: required argument 'name'")
+        # save data to json and return to table
 
     def btnPress2_Clicked(self):
         print("Canceled: " + self.editField2.text())
@@ -70,11 +73,11 @@ class MyTable(QTableWidget):
         self.insertRow(rowCount)
 
     def removeOneRow(self):
+        # removes the last column
         if self.rowCount() > 0:
             self.removeRow(self.rowCount() - 1)
 
     def showTable(self):
-        self.setHorizontalHeaderLabels(["ID", "Name", "Year", "Photo", "Course", "Group"])
         records = len(self.data)
         for i in range(records):
             rows = self.rowCount()
@@ -122,9 +125,11 @@ class DatabaseClient(QWidget):
         self.setLayout(mainLayout)
 
     def createSubwindow(self):
-        cells = []
-        for item in self.view.selectedItems():
-            cells.append(item.text())
+        cells = {}
+        fields = ["id", "name", "year", "photo", "course", "group"]
+        selected = self.view.selectedItems()
+        for i in range(len(selected)):
+            cells.update({fields[i]: self.view.selectedItems()[i].text()})
 
         if self.subwindow is None:
             self.subwindow = TextEdit(cells)
@@ -137,7 +142,7 @@ class DatabaseClient(QWidget):
     def postRequest(self, new_data):
         hdrs = {"Content-Type": "application/json; charset=utf-8", "Accept": "application/json"}
         req = requests.post(self.host + "/post-data", json=new_data, headers=hdrs)
-        print(req.headers)
+        # print(req.headers)
 
 
 if __name__ == '__main__':
