@@ -1,89 +1,134 @@
 import sys
-from random import randint
 import requests
 import json
-
 from PyQt5 import QtCore
-from PyQt5.QtSql import QSqlTableModel
-from PyQt5.QtWidgets import QApplication, QMainWindow, QTableWidget, QTableWidgetItem, QLabel, QLineEdit, QVBoxLayout, QPushButton, QWidget, QTextEdit
+from PyQt5.QtWidgets import QApplication, QTableWidget, QTableWidgetItem, QLabel, QLineEdit, QVBoxLayout, \
+    QPushButton, QWidget, QHBoxLayout
 
 
 class TextEdit(QWidget):
-    def __init__(self, parent=None):
+    def __init__(self, cells, parent=None):
         super().__init__(parent)
 
-        self.setWindowTitle("Редактирование записи")
+        self.setWindowTitle("Edit record")
         self.resize(600, 100)
-        self.textEdit1 = QTextEdit()
-        self.textEdit2 = QTextEdit()
-        self.btnPress1 = QPushButton("Сохранить")
-        self.btnPress2 = QPushButton("Отмена")
+        self.editField1 = QLineEdit(self)
+        self.editField2 = QLineEdit(self)
+        self.editField3 = QLineEdit(self)
+        self.editField4 = QLineEdit(self)
 
+        self.btnPress1 = QPushButton("Save")
+        self.btnPress2 = QPushButton("Cancel")
+        self.nameLabel = QLabel(self)
+        self.yearLabel = QLabel(self)
+        self.courseLabel = QLabel(self)
+        self.groupLabel = QLabel(self)
+        self.cells = cells
+
+        if self.cells:
+            self.setValues()
         layout = QVBoxLayout()
-        layout.addWidget(self.textEdit1)
-        layout.addWidget(self.textEdit2)
+        layout.addWidget(self.editField1)
+        layout.addWidget(self.editField2)
+        layout.addWidget(self.editField3)
+        layout.addWidget(self.editField4)
         layout.addWidget(self.btnPress1)
         layout.addWidget(self.btnPress2)
         self.setLayout(layout)
-
         self.btnPress1.clicked.connect(self.btnPress1_Clicked)
         self.btnPress2.clicked.connect(self.btnPress2_Clicked)
 
+    def setValues(self):
+        # add names of the fields
+        self.editField1.setText(self.cells[1])
+        self.editField2.setText(self.cells[2])
+        # upload image
+        self.editField3.setText(self.cells[4])
+        self.editField4.setText(self.cells[5])
+
+    def insert(self, cells):
+        self.cells = cells
+        print("cells: ", cells)
+
     def btnPress1_Clicked(self):
-        self.textEdit1.setPlainText("Кнопочка.\nНе понимаю как оно работает")
+        print("New data: " + self.editField1.text())
+        # save data to json
 
     def btnPress2_Clicked(self):
-        self.textEdit2.setHtml("<font color='green' size='5'><red>отмена\n</font>")
+        print("Canceled: " + self.editField2.text())
 
 
-class DatabaseClient(QMainWindow):
+class MyTable(QTableWidget):
+    def __init__(self, tableData, parent=None):
+        super().__init__(parent)
+        self.setColumnCount(6)
+        self.setHorizontalHeaderLabels(["ID", "Name", "Year", "Photo", "Course", "Group"])
+        self.data = tableData
+
+    def addNewRow(self):
+        rowCount = self.rowCount()
+        self.insertRow(rowCount)
+
+    def removeOneRow(self):
+        if self.rowCount() > 0:
+            self.removeRow(self.rowCount() - 1)
+
+    def showTable(self):
+        self.setHorizontalHeaderLabels(["ID", "Name", "Year", "Photo", "Course", "Group"])
+        records = len(self.data)
+        for i in range(records):
+            rows = self.rowCount()
+            self.setRowCount(rows + 1)
+            for num in range(records):
+                primary_key = QTableWidgetItem(str(self.data[num]["id"]))
+                primary_key.setFlags(primary_key.flags() ^ QtCore.Qt.ItemIsEditable)
+                self.setItem(num, 0, primary_key)
+                self.setItem(num, 1, QTableWidgetItem(str(self.data[num]["name"])))
+                self.setItem(num, 2, QTableWidgetItem(str(self.data[num]["year"])))
+                self.setItem(num, 3, QTableWidgetItem(str(self.data[num]["photo"])))
+                self.setItem(num, 4, QTableWidgetItem(str(self.data[num]["course"])))
+                self.setItem(num, 5, QTableWidgetItem(str(self.data[num]["group"])))
+        self.resizeColumnsToContents()
+
+
+class DatabaseClient(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.subwindow = None
-        self.mySubwindow = None
         self.setWindowTitle("Database Example")
-        self.resize(950, 500)
+        self.resize(1100, 500)
         self.host = "http://localhost:8000/"
 
-        self.view = QTableWidget()
-        self.view.setColumnCount(6)
-        self.view.setHorizontalHeaderLabels(["ID", "Name", "Year", "Photo", "Course", "Group"])
+        mainLayout = QHBoxLayout()
+        table = self.getRequest().json()
+        self.view = MyTable(table)
+        mainLayout.addWidget(self.view)
+        buttonLayout = QVBoxLayout()
+        self.view.showTable()
 
-        self.model = QSqlTableModel(self)
-        self.model.setTable("Students")
-        self.showTable()
+        newButton = QPushButton("New record")
+        newButton.clicked.connect(self.view.addNewRow)
+        buttonLayout.addWidget(newButton)
 
-        self.button = QPushButton("Редактировать", self)
-        self.button.clicked.connect(self.createSubwindow)
-        self.button.resize(210, 35)
-        self.button.move(450, 350)
+        removeButton = QPushButton("Remove")
+        removeButton.clicked.connect(self.view.removeOneRow)
+        buttonLayout.addWidget(removeButton)
+
+        editButton = QPushButton("Edit")
+        editButton.clicked.connect(self.createSubwindow)
+        buttonLayout.addWidget(editButton)
+
+        mainLayout.addLayout(buttonLayout)
+        self.setLayout(mainLayout)
 
     def createSubwindow(self):
+        cells = []
+        for item in self.view.selectedItems():
+            cells.append(item.text())
+
         if self.subwindow is None:
-            self.subwindow = TextEdit()
+            self.subwindow = TextEdit(cells)
         self.subwindow.show()
-
-    def showTable(self):
-        self.view = QTableWidget()
-        self.view.setColumnCount(6)
-        self.view.setHorizontalHeaderLabels(["ID", "Name", "Year", "Photo", "Course", "Group"])
-        table = self.getRequest().json()
-        records = len(table)
-        for i in range(records):
-            rows = self.view.rowCount()
-            self.view.setRowCount(rows + 1)
-            for num in range(records):
-                primary_key = QTableWidgetItem(str(table[num]["id"]))
-                primary_key.setFlags(primary_key.flags() ^ QtCore.Qt.ItemIsEditable)
-                self.view.setItem(num, 0, primary_key)
-                self.view.setItem(num, 1, QTableWidgetItem(str(table[num]["name"])))
-                self.view.setItem(num, 2, QTableWidgetItem(str(table[num]["year"])))
-                self.view.setItem(num, 3, QTableWidgetItem(str(table[num]["photo"])))
-                self.view.setItem(num, 4, QTableWidgetItem(str(table[num]["course"])))
-                self.view.setItem(num, 5, QTableWidgetItem(str(table[num]["group"])))
-
-        self.view.resizeColumnsToContents()
-        self.setCentralWidget(self.view)
 
     def getRequest(self):
         req = requests.get(self.host + "/get-data")
@@ -98,7 +143,6 @@ class DatabaseClient(QMainWindow):
 if __name__ == '__main__':
     f = open("file.json")
     data = json.load(f)
-    # print("JSON: ", data)
     app = QApplication(sys.argv)
     client = DatabaseClient()
     client.show()
