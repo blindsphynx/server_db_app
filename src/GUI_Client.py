@@ -3,7 +3,7 @@ import requests
 import json
 from PyQt5 import QtCore
 from PyQt5.QtWidgets import QApplication, QTableWidget, QTableWidgetItem, QLabel, QLineEdit, \
-    QVBoxLayout, QPushButton, QWidget, QHBoxLayout
+    QVBoxLayout, QPushButton, QWidget, QHBoxLayout, QTableView, QHeaderView, QLayoutItem, QAbstractItemView
 
 
 class TextEdit(QWidget):
@@ -25,8 +25,7 @@ class TextEdit(QWidget):
         self.groupLabel = QLabel(self)
         self.cells = cells
 
-        if self.cells:
-            self.setValues()
+        self.setValues()
         layout = QVBoxLayout()
         layout.addWidget(self.editField1)
         layout.addWidget(self.editField2)
@@ -46,10 +45,6 @@ class TextEdit(QWidget):
         self.editField3.setText(self.cells["course"])
         self.editField4.setText(self.cells["group"])
 
-    def insert(self, cells):
-        self.cells = cells
-        print("cells: ", cells)
-
     def btnPress1_Clicked(self):
         if self.editField1.text():
             print("New data: " + self.editField1.text())
@@ -61,12 +56,26 @@ class TextEdit(QWidget):
         print("Canceled: " + self.editField2.text())
 
 
+class MyCustomTable(QHBoxLayout):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.label = QTableWidgetItem()
+        self.surname = QTableWidgetItem()
+        self.insertWidget(1, self.label)
+        self.setSpacing(100)
+
+    def setName(self, name):
+        self.label.setText("myItem")
+        self.surname.setText("help")
+
+
 class MyTable(QTableWidget):
     def __init__(self, tableData, parent=None):
         super().__init__(parent)
-        self.setColumnCount(6)
-        self.setHorizontalHeaderLabels(["ID", "Name", "Year", "Photo", "Course", "Group"])
+        self.setColumnCount(5)
+        self.setHorizontalHeaderLabels(["Name", "Year", "Photo", "Course", "Group"])
         self.data = tableData
+        self.setSelectionBehavior(QAbstractItemView.SelectRows)
 
     def addNewRow(self):
         rowCount = self.rowCount()
@@ -83,14 +92,11 @@ class MyTable(QTableWidget):
             rows = self.rowCount()
             self.setRowCount(rows + 1)
             for num in range(records):
-                primary_key = QTableWidgetItem(str(self.data[num]["id"]))
-                primary_key.setFlags(primary_key.flags() ^ QtCore.Qt.ItemIsEditable)
-                self.setItem(num, 0, primary_key)
-                self.setItem(num, 1, QTableWidgetItem(str(self.data[num]["name"])))
-                self.setItem(num, 2, QTableWidgetItem(str(self.data[num]["year"])))
-                self.setItem(num, 3, QTableWidgetItem(str(self.data[num]["photo"])))
-                self.setItem(num, 4, QTableWidgetItem(str(self.data[num]["course"])))
-                self.setItem(num, 5, QTableWidgetItem(str(self.data[num]["group"])))
+                self.setItem(num, 0, QTableWidgetItem(str(self.data[num]["name"])))
+                self.setItem(num, 1, QTableWidgetItem(str(self.data[num]["year"])))
+                self.setItem(num, 2, QTableWidgetItem(str(self.data[num]["photo"])))
+                self.setItem(num, 3, QTableWidgetItem(str(self.data[num]["course"])))
+                self.setItem(num, 4, QTableWidgetItem(str(self.data[num]["group"])))
         self.resizeColumnsToContents()
 
 
@@ -106,6 +112,8 @@ class DatabaseClient(QWidget):
         table = self.getRequest().json()
         self.view = MyTable(table)
         mainLayout.addWidget(self.view)
+
+        self.setLayout(mainLayout)
         buttonLayout = QVBoxLayout()
         self.view.showTable()
 
@@ -126,7 +134,7 @@ class DatabaseClient(QWidget):
 
     def createSubwindow(self):
         cells = {}
-        fields = ["id", "name", "year", "photo", "course", "group"]
+        fields = ["name", "year", "photo", "course", "group"]
         selected = self.view.selectedItems()
         for i in range(len(selected)):
             cells.update({fields[i]: self.view.selectedItems()[i].text()})
