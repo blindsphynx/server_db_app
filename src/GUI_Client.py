@@ -2,10 +2,14 @@ import sys
 import requests
 import json
 
-from PyQt5 import QtGui
-from PyQt5.QtCore import QDir, QFile, QIODevice, QFileInfo
+from PyQt5 import QtGui, QtCore
+from PyQt5.QtCore import pyqtSignal, QObject
 from PyQt5.QtWidgets import QApplication, QTableWidget, QTableWidgetItem, QLabel, QLineEdit, \
-    QVBoxLayout, QPushButton, QWidget, QHBoxLayout, QAbstractItemView, QMessageBox, QFileDialog
+    QVBoxLayout, QPushButton, QWidget, QHBoxLayout, QAbstractItemView, QMessageBox
+
+
+class Communicate(QObject):
+    buttonClicked = pyqtSignal()
 
 
 class TextEdit(QWidget):
@@ -20,6 +24,7 @@ class TextEdit(QWidget):
         self.editField4 = QLineEdit(self)
         self.saveButton = QPushButton("Save")
         self.cancelButton = QPushButton("Cancel")
+        self.emitSignal()
         self.cells = cells
 
         self.setValues()
@@ -55,6 +60,14 @@ class TextEdit(QWidget):
         self.saveButton.clicked.connect(self.saveButtonClicked)
         self.cancelButton.clicked.connect(self.cancelButtonClicked)
 
+    def emitSignal(self):
+        self.c = Communicate()
+        self.c.buttonClicked.connect(self.saveButtonClicked)
+        self.show()
+
+    def buttonPressEvent(self, event):
+        self.c.buttonClicked.emit()
+
     def setValues(self):
         self.editField1.setAccessibleName("name: ")
         self.editField1.setText(self.cells["name"])
@@ -70,7 +83,6 @@ class TextEdit(QWidget):
             json_object = json.dumps(newData, indent=4)
             with open("sample.json", "w") as outfile:
                 outfile.write(json_object)
-
             self.infoMessageBox(title="Saving", message="Data was saved")
         else:
             QMessageBox.critical(
@@ -96,16 +108,6 @@ class TextEdit(QWidget):
         returnValue = msgBox.exec()
         if returnValue == QMessageBox.Ok:
             print("cancel OK clicked")
-
-
-class ImageWidget(QWidget):
-    def __init__(self, imagePath, parent):
-        super(ImageWidget, self).__init__(parent)
-        self.picture = QtGui.QPixmap(imagePath)
-
-    def paintEvent(self, event):
-        painter = QtGui.QPainter(self)
-        painter.drawPixmap(0, 0, self.picture)
 
 
 class MyTable(QTableWidget):
@@ -144,11 +146,10 @@ class MyTable(QTableWidget):
             for num in range(records):
                 self.setItem(num, 0, QTableWidgetItem(str(self.data[num]["name"])))
                 self.setItem(num, 1, QTableWidgetItem(str(self.data[num]["year"])))
-                if num == 0:
-                    item = self.setImage("kitty.jpg")
-                    self.setItem(num, 2, QTableWidgetItem(item))
-                else:
-                    self.setItem(num, 2, QTableWidgetItem(str(self.data[num]["photo"])))
+                # if num == 0:
+                #     item = self.setImage("kitty.jpg")
+                #     self.setItem(num, 2, QTableWidgetItem(item))
+                self.setItem(num, 2, QTableWidgetItem(str(self.data[num]["photo"])))
                 self.setItem(num, 3, QTableWidgetItem(str(self.data[num]["course"])))
                 self.setItem(num, 4, QTableWidgetItem(str(self.data[num]["group"])))
         self.resizeColumnsToContents()
@@ -194,7 +195,7 @@ class DatabaseClient(QWidget):
             for i in range(len(selected)):
                 cells.update({fields[i]: self.view.selectedItems()[i].text()})
         else:
-            for i in range(5):
+            for i in range(len(fields)):
                 cells.update({fields[i]: ""})
         self.subwindow = TextEdit(cells)
         self.subwindow.show()
