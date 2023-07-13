@@ -1,9 +1,11 @@
 import sys
 import requests
 import json
-from PyQt5 import QtCore
+
+from PyQt5 import QtGui
+from PyQt5.QtCore import QDir, QFile, QIODevice, QFileInfo
 from PyQt5.QtWidgets import QApplication, QTableWidget, QTableWidgetItem, QLabel, QLineEdit, \
-    QVBoxLayout, QPushButton, QWidget, QHBoxLayout, QTableView, QHeaderView, QLayoutItem, QAbstractItemView
+    QVBoxLayout, QPushButton, QWidget, QHBoxLayout, QAbstractItemView, QMessageBox, QFileDialog
 
 
 class TextEdit(QWidget):
@@ -11,62 +13,99 @@ class TextEdit(QWidget):
         super().__init__(parent)
 
         self.setWindowTitle("Edit record")
-        self.resize(600, 100)
+        self.resize(900, 400)
         self.editField1 = QLineEdit(self)
         self.editField2 = QLineEdit(self)
         self.editField3 = QLineEdit(self)
         self.editField4 = QLineEdit(self)
-
-        self.btnPress1 = QPushButton("Save")
-        self.btnPress2 = QPushButton("Cancel")
-        self.nameLabel = QLabel(self)
-        self.yearLabel = QLabel(self)
-        self.courseLabel = QLabel(self)
-        self.groupLabel = QLabel(self)
+        self.saveButton = QPushButton("Save")
+        self.cancelButton = QPushButton("Cancel")
         self.cells = cells
 
         self.setValues()
-        layout = QVBoxLayout()
-        layout.addWidget(self.editField1)
-        layout.addWidget(self.editField2)
-        layout.addWidget(self.editField3)
-        layout.addWidget(self.editField4)
-        layout.addWidget(self.btnPress1)
-        layout.addWidget(self.btnPress2)
-        self.setLayout(layout)
-        self.btnPress1.clicked.connect(self.btnPress1_Clicked)
-        self.btnPress2.clicked.connect(self.btnPress2_Clicked)
+        mainLayout = QVBoxLayout()
+        labelsLayout = QVBoxLayout()
+        fieldsLayout = QVBoxLayout()
+        commonLayout = QHBoxLayout()
+        buttonsLayout = QHBoxLayout()
+
+        label1 = QLabel("Name:")
+        label2 = QLabel("Year:")
+        label3 = QLabel("Course:")
+        label4 = QLabel("Group:")
+
+        labelsLayout.addWidget(label1)
+        fieldsLayout.addWidget(self.editField1)
+        labelsLayout.addWidget(label2)
+        fieldsLayout.addWidget(self.editField2)
+        labelsLayout.addWidget(label3)
+        fieldsLayout.addWidget(self.editField3)
+        labelsLayout.addWidget(label4)
+        fieldsLayout.addWidget(self.editField4)
+
+        buttonsLayout.addWidget(self.saveButton)
+        buttonsLayout.addWidget(self.cancelButton)
+
+        commonLayout.addLayout(labelsLayout)
+        commonLayout.addLayout(fieldsLayout)
+        mainLayout.addLayout(commonLayout)
+        mainLayout.addLayout(buttonsLayout)
+
+        self.setLayout(mainLayout)
+        self.saveButton.clicked.connect(self.saveButtonClicked)
+        self.cancelButton.clicked.connect(self.cancelButtonClicked)
 
     def setValues(self):
-        # add names of the fields
+        self.editField1.setAccessibleName("name: ")
         self.editField1.setText(self.cells["name"])
         self.editField2.setText(self.cells["year"])
         # upload image
         self.editField3.setText(self.cells["course"])
         self.editField4.setText(self.cells["group"])
 
-    def btnPress1_Clicked(self):
+    def saveButtonClicked(self):
         if self.editField1.text():
-            print("New data: " + self.editField1.text())
+            newData = {"name": self.editField1.text(), "year": self.editField2.text(),
+                       "course": self.editField3.text(), "group": self.editField4.text()}
+            json_object = json.dumps(newData, indent=4)
+            with open("sample.json", "w") as outfile:
+                outfile.write(json_object)
+
+            self.infoMessageBox(title="Saving", message="Data was saved")
         else:
-            print("Error: required argument 'name'")
-        # save data to json and return to table
+            QMessageBox.critical(
+                None,
+                "Error while saving",
+                "Required field 'name'"
+            )
 
-    def btnPress2_Clicked(self):
-        print("Canceled: " + self.editField2.text())
+    def cancelButtonClicked(self):
+        self.editField1.setText(self.cells["name"])
+        self.editField2.setText(self.cells["year"])
+        self.editField3.setText(self.cells["course"])
+        self.editField4.setText(self.cells["group"])
+        self.infoMessageBox(title="Cancel", message="Changes were canceled")
+
+    def infoMessageBox(self, title, message):
+        msgBox = QMessageBox()
+        msgBox.setIcon(QMessageBox.Information)
+        msgBox.setText(message)
+        msgBox.setWindowTitle(title)
+        msgBox.setStandardButtons(QMessageBox.Ok)
+        msgBox.buttonClicked.connect(msgBox.close)
+        returnValue = msgBox.exec()
+        if returnValue == QMessageBox.Ok:
+            print("cancel OK clicked")
 
 
-class MyCustomTable(QHBoxLayout):
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.label = QTableWidgetItem()
-        self.surname = QTableWidgetItem()
-        self.insertWidget(1, self.label)
-        self.setSpacing(100)
+class ImageWidget(QWidget):
+    def __init__(self, imagePath, parent):
+        super(ImageWidget, self).__init__(parent)
+        self.picture = QtGui.QPixmap(imagePath)
 
-    def setName(self, name):
-        self.label.setText("myItem")
-        self.surname.setText("help")
+    def paintEvent(self, event):
+        painter = QtGui.QPainter(self)
+        painter.drawPixmap(0, 0, self.picture)
 
 
 class MyTable(QTableWidget):
@@ -82,9 +121,20 @@ class MyTable(QTableWidget):
         self.insertRow(rowCount)
 
     def removeOneRow(self):
-        # removes the last column
-        if self.rowCount() > 0:
-            self.removeRow(self.rowCount() - 1)
+        selected = self.selectedItems()
+        if selected:
+            # вынести запись в файл в отдельную функ
+            # и тут записывать тоже что было удалено
+            self.removeRow(self.currentRow())
+
+    def setImage(self, imagePath):
+        image = QLabel()
+        image.setText("")
+        image.setScaledContents(True)
+        pixmap = QtGui.QPixmap()
+        pixmap.loadFromData(imagePath)
+        image.setPixmap(pixmap)
+        return image
 
     def showTable(self):
         records = len(self.data)
@@ -94,7 +144,11 @@ class MyTable(QTableWidget):
             for num in range(records):
                 self.setItem(num, 0, QTableWidgetItem(str(self.data[num]["name"])))
                 self.setItem(num, 1, QTableWidgetItem(str(self.data[num]["year"])))
-                self.setItem(num, 2, QTableWidgetItem(str(self.data[num]["photo"])))
+                if num == 0:
+                    item = self.setImage("kitty.jpg")
+                    self.setItem(num, 2, QTableWidgetItem(item))
+                else:
+                    self.setItem(num, 2, QTableWidgetItem(str(self.data[num]["photo"])))
                 self.setItem(num, 3, QTableWidgetItem(str(self.data[num]["course"])))
                 self.setItem(num, 4, QTableWidgetItem(str(self.data[num]["group"])))
         self.resizeColumnsToContents()
@@ -136,11 +190,13 @@ class DatabaseClient(QWidget):
         cells = {}
         fields = ["name", "year", "photo", "course", "group"]
         selected = self.view.selectedItems()
-        for i in range(len(selected)):
-            cells.update({fields[i]: self.view.selectedItems()[i].text()})
-
-        if self.subwindow is None:
-            self.subwindow = TextEdit(cells)
+        if selected:
+            for i in range(len(selected)):
+                cells.update({fields[i]: self.view.selectedItems()[i].text()})
+        else:
+            for i in range(5):
+                cells.update({fields[i]: ""})
+        self.subwindow = TextEdit(cells)
         self.subwindow.show()
 
     def getRequest(self):
