@@ -1,5 +1,4 @@
-from PyQt5.QtCore import pyqtSlot, QSize, QObject, pyqtSignal
-from PyQt5.QtGui import QPixmap
+from PyQt5.QtCore import QSize, QObject, pyqtSignal
 from PyQt5.QtWidgets import QMessageBox, QFileDialog, QLabel, QHBoxLayout, QVBoxLayout, QPushButton, QLineEdit, QWidget
 import json
 import qtawesome as qta
@@ -9,11 +8,23 @@ class Communicate(QObject):
     buttonClicked = pyqtSignal()
 
 
+def infoMessageBox(title, message):
+    msgBox = QMessageBox()
+    msgBox.setIcon(QMessageBox.Information)
+    msgBox.setText(message)
+    msgBox.setWindowTitle(title)
+    msgBox.setStandardButtons(QMessageBox.Ok)
+    msgBox.buttonClicked.connect(msgBox.close)
+    returnValue = msgBox.exec()
+    if returnValue == QMessageBox.Ok:
+        print("cancel OK clicked")
+
+
 class TextEdit(QWidget):
     def __init__(self, cells, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Edit record")
-        self.setFixedWidth(900)
+        self.setFixedWidth(1000)
         self.setFixedHeight(400)
         self.cells = cells
         self.editField1 = QLineEdit(self)
@@ -34,7 +45,8 @@ class TextEdit(QWidget):
         self.setValues()
         self.saveButton.clicked.connect(self.saveButtonClicked)
         self.cancelButton.clicked.connect(self.cancelButtonClicked)
-        self.cancelButton.clicked.connect(self.uploadButtonClicked)
+        self.uploadImageButton.clicked.connect(self.uploadButtonClicked)
+        self.newImagePath = ""
 
     def emitSignal(self):
         self.communicate.buttonClicked.connect(self.saveButtonClicked)
@@ -90,12 +102,14 @@ class TextEdit(QWidget):
     def saveButtonClicked(self):
         if self.editField1.text():
             newData = {"name": self.editField1.text(), "year": self.editField2.text(),
-                       "photo": "",
-                       "course": self.editField3.text(), "group": self.editField4.text()}
+                       "photo": self.newImagePath, "course": self.editField3.text(), "group": self.editField4.text()}
             json_object = json.dumps(newData, indent=4)
             with open("save.json", "w") as outfile:
                 outfile.write(json_object)
-            self.infoMessageBox(title="Saving", message="Data was saved")
+            infoMessageBox(title="Saving", message="Data was saved")
+            self.imageName.setText(self.newImagePath)
+            self.imageName.show()
+            # signal
         else:
             QMessageBox.critical(
                 None,
@@ -108,25 +122,8 @@ class TextEdit(QWidget):
         self.editField2.setText(self.cells["year"])
         self.editField3.setText(self.cells["course"])
         self.editField4.setText(self.cells["group"])
-        self.infoMessageBox(title="Cancel", message="Changes were canceled")
+        infoMessageBox(title="Cancel", message="Changes were canceled")
 
-    @pyqtSlot()
     def uploadButtonClicked(self):
-        print("check")
         image = QFileDialog.getOpenFileName(None, 'OpenFile', '', "Image file(*.jpg)")
-        imagePath = image[0]
-        pixmap = QPixmap(imagePath)
-        self.label.setPixmap(pixmap)
-        self.label.adjustSize()
-        print(imagePath)
-
-    def infoMessageBox(self, title, message):
-        msgBox = QMessageBox()
-        msgBox.setIcon(QMessageBox.Information)
-        msgBox.setText(message)
-        msgBox.setWindowTitle(title)
-        msgBox.setStandardButtons(QMessageBox.Ok)
-        msgBox.buttonClicked.connect(msgBox.close)
-        returnValue = msgBox.exec()
-        if returnValue == QMessageBox.Ok:
-            print("cancel OK clicked")
+        self.newImagePath = image[0]

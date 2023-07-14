@@ -51,7 +51,6 @@ class DatabaseClient(QWidget):
         else:
             for i in range(len(fields)):
                 cells.update({fields[i]: ""})
-        print(cells)
         self.subwindow = TextEdit(cells)
         self.subwindow.show()
 
