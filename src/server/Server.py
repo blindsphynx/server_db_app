@@ -1,10 +1,11 @@
+import json
 from PyQt5.QtWidgets import QMessageBox
 from flask import Flask, request, jsonify
-from PyQt5.QtSql import QSqlDatabase, QSqlTableModel, QSqlQuery
-from tabulate import tabulate
+import psycopg2
 
 server = Flask(__name__)
-DBconnection = [QSqlDatabase.addDatabase("QPSQL")]
+DBconnection = [None]
+DBcursor = [None]
 
 
 @server.route('/')
@@ -14,8 +15,8 @@ def home():
 
 @server.route('/get-data')
 def get():
-    query = QSqlQuery("SELECT * FROM students")
-    table = readFromDatabase(query)
+    query = "SELECT * FROM students"
+    table = readFromDatabase(query, DBcursor)
     return table, 200
 
 
@@ -30,17 +31,17 @@ def post():
         gruppa = new_data['gruppa']
         query = f"INSERT INTO students(id, name, year, photo, course, gruppa) " \
                 f"VALUES(6, '{name}', {year}, '{picture}', {course}, {gruppa});"
-        writeToDatabase(query, cursor=DBcursor)
+        # query = "delete from students where name='Petrov Petr'"
+        writeToDatabase(query, DBcursor)
         return jsonify(id=6, name=name, year=year, picture=picture, course=course, gruppa=gruppa), 201
 
 
-def connect_to_postgesql(connection):
-    connection[0] = QSqlDatabase.addDatabase("QPSQL")
-    connection[0].setDatabaseName("postgres1")
-    connection[0].setHostName('localhost')
-    connection[0].setUserName('user')
-    connection[0].setPassword('pyro127')
-    if not connection.open():
+def connect_to_postgesql(connection, cursor):
+    connection[0] = psycopg2.connect(dbname='postgres1', user='user',
+                                     password='pyro127', host='localhost', port='5432')
+    connection[0].autocommit = True
+    cursor[0] = connection[0].cursor()
+    if not connection[0]:
         QMessageBox.critical(
             None,
             "Error!",
@@ -62,5 +63,12 @@ def writeToDatabase(query, cursor):
     print("[INFO] Data was added to the database")
 
 
-def readFromDatabase(query):
-    pass
+def readFromDatabase(query, cursor):
+    cursor[0].execute(query)
+    records = cursor[0].fetchall()
+    table = []
+    for line in records:
+        data = {"id": line[0], "name": line[1], "year": line[2], "photo": line[3], "course": line[4], "group": line[5]}
+        table.append(data)
+    result = json.dumps(table)
+    return result
