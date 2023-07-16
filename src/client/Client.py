@@ -1,5 +1,5 @@
 from PyQt5.QtWidgets import QVBoxLayout, QPushButton, QWidget, QHBoxLayout
-from TextEditWidget import TextEdit
+from TextEditWidget import TextEdit, Communicate
 import requests
 from TableWidget import MyTable
 
@@ -21,6 +21,9 @@ class DatabaseClient(QWidget):
         buttonLayout = QVBoxLayout()
         self.view.showTable()
 
+        self.communicate = Communicate()
+        self.communicate.buttonClicked.connect(self.view.update)
+
         newButton = QPushButton("New record")
         newButton.clicked.connect(self.view.addNewRow)
         buttonLayout.addWidget(newButton)
@@ -40,19 +43,23 @@ class DatabaseClient(QWidget):
         cells = {}
         fields = ["name", "year", "course", "group"]
         selected = self.view.selectedItems()
-        if self.view.data[self.view.currentRow()]["photo"]:
-            path = self.view.data[self.view.currentRow()]["photo"]
-        else:
-            path = ""
+        currentRow = self.view.currentRow()
         if selected:
-            for i in range(len(selected)):
-                cells.update({fields[i]: self.view.selectedItems()[i].text()})
-            cells.update({"photo": path})
-        else:
-            for i in range(len(fields)):
-                cells.update({fields[i]: ""})
-        self.subwindow = TextEdit(cells)
-        self.subwindow.show()
+            if currentRow < len(self.view.data):
+                if self.view.data[currentRow]["photo"]:
+                    path = self.view.data[currentRow]["photo"]
+                else:
+                    path = ""
+                for i in range(len(selected)):
+                    cells.update({fields[i]: self.view.selectedItems()[i].text()})
+                    cells.update({"photo": path})
+                # else:
+                #     for i in range(len(fields)):
+                #         cells.update({fields[i]: ""})
+            else:
+                cells = {"name": "", "year": "", "photo": "", "course": "", "group": ""}
+            self.subwindow = TextEdit(cells)
+            self.subwindow.show()
 
     def getRequest(self):
         req = requests.get(self.host + "/get-data")

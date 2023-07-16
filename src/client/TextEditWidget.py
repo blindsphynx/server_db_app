@@ -39,7 +39,6 @@ class TextEdit(QWidget):
         self.cancelButton = QPushButton("Cancel")
         self.uploadImageButton = QPushButton("Upload new photo")
         self.communicate = Communicate()
-        self.emitSignal()
 
         self.setLayouts()
         self.setValues()
@@ -51,9 +50,6 @@ class TextEdit(QWidget):
     def emitSignal(self):
         self.communicate.buttonClicked.connect(self.saveButtonClicked)
         self.show()
-
-    def buttonPressEvent(self, event):
-        self.communicate.buttonClicked.emit()
 
     def setLayouts(self):
         mainLayout = QVBoxLayout()
@@ -107,9 +103,8 @@ class TextEdit(QWidget):
             with open("save.json", "w") as outfile:
                 outfile.write(json_object)
             infoMessageBox(title="Saving", message="Data was saved")
-            self.imageName.setText(self.newImagePath)
-            self.imageName.show()
-            # signal
+            self.communicate.buttonClicked.emit()
+            print("emit signal")
         else:
             QMessageBox.critical(
                 None,
@@ -127,3 +122,4 @@ class TextEdit(QWidget):
     def uploadButtonClicked(self):
         image = QFileDialog.getOpenFileName(None, 'OpenFile', '', "Image file(*.jpg)")
         self.newImagePath = image[0]
+        self.imageName.setText(self.newImagePath)

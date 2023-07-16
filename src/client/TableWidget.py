@@ -31,6 +31,7 @@ class MyTable(QTableWidget):
     def addNewRow(self):
         rowCount = self.rowCount()
         self.insertRow(rowCount)
+        self.setItem(rowCount, 0, QTableWidgetItem(" "))
 
     def removeOneRow(self):
         selected = self.selectedItems()
