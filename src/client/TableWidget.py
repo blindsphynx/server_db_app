@@ -36,11 +36,15 @@ class MyTable(QTableWidget):
     def removeOneRow(self):
         selected = self.selectedItems()
         if selected:
-            newData = {"name": self.editField1.text(), "year": self.editField2.text(),
-                       "course": self.editField3.text(), "group": self.editField4.text()}
-            json_object = json.dumps(newData, indent=4)
-            with open("delete.json", "w") as outfile:
-                outfile.write(json_object)
+            if self.currentRow() < len(self.data):
+                data = self.data[self.currentRow()]
+                newData = {"name": data["name"], "year": data["year"],
+                           "photo": data["photo"], "course": data["course"],
+                           "group": data["group"]}
+                json_object = json.dumps(newData, indent=4)
+                with open("delete.json", "w") as outfile:
+                    outfile.write(json_object)
+                # signal about post request
             self.removeRow(self.currentRow())
 
     def showTable(self):
