@@ -48,7 +48,8 @@ class MyTable(QTableWidget):
                 json_object = json.dumps(newData, indent=4)
                 with open("delete.json", "w") as outfile:
                     outfile.write(json_object)
-                # self.signal.emit("Remove Signal")
+                self.signal.emit()
+                print("remove signal")
             self.removeRow(self.currentRow())
 
     def showTable(self, newData):

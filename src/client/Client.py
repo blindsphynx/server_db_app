@@ -46,12 +46,13 @@ class DatabaseClient(QWidget):
         f = open("save.json")
         data = json.load(f)
         for i in range(len(self.table)):
-            if self.table[i]["id"] == data["id"]:
-                self.table[i] = data
-                break
-            else:
+            if data["id"] > len(self.table):
                 self.table.append(data)
                 break
+            if self.table[i]["id"] == data["id"]:
+                self.table[i] = data
+            else:
+                continue
         self.view.showTable(self.table)
         self.postRequest(data)
 
