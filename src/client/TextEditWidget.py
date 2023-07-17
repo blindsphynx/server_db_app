@@ -1,11 +1,7 @@
-from PyQt5.QtCore import QSize, QObject, pyqtSignal
+from PyQt5.QtCore import QSize, QObject, pyqtSignal, pyqtSlot
 from PyQt5.QtWidgets import QMessageBox, QFileDialog, QLabel, QHBoxLayout, QVBoxLayout, QPushButton, QLineEdit, QWidget
 import json
 import qtawesome as qta
-
-
-class Communicate(QObject):
-    buttonClicked = pyqtSignal()
 
 
 def infoMessageBox(title, message):
@@ -17,16 +13,19 @@ def infoMessageBox(title, message):
     msgBox.buttonClicked.connect(msgBox.close)
     returnValue = msgBox.exec()
     if returnValue == QMessageBox.Ok:
-        print("cancel OK clicked")
+        print("OK clicked")
 
 
 class TextEdit(QWidget):
-    def __init__(self, cells, parent=None):
+    signal = pyqtSignal()
+
+    def __init__(self, cells, row, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Edit record")
         self.setFixedWidth(1000)
         self.setFixedHeight(400)
         self.cells = cells
+        self.row = row + 1
         self.editField1 = QLineEdit(self)
         self.editField2 = QLineEdit(self)
         self.editField3 = QLineEdit(self)
@@ -38,7 +37,6 @@ class TextEdit(QWidget):
         self.saveButton = QPushButton("Save")
         self.cancelButton = QPushButton("Cancel")
         self.uploadImageButton = QPushButton("Upload new photo")
-        self.communicate = Communicate()
 
         self.setLayouts()
         self.setValues()
@@ -46,10 +44,6 @@ class TextEdit(QWidget):
         self.cancelButton.clicked.connect(self.cancelButtonClicked)
         self.uploadImageButton.clicked.connect(self.uploadButtonClicked)
         self.newImagePath = ""
-
-    def emitSignal(self):
-        self.communicate.buttonClicked.connect(self.saveButtonClicked)
-        self.show()
 
     def setLayouts(self):
         mainLayout = QVBoxLayout()
@@ -95,15 +89,16 @@ class TextEdit(QWidget):
         self.editField3.setText(self.cells["course"])
         self.editField4.setText(self.cells["group"])
 
+    @pyqtSlot()
     def saveButtonClicked(self):
         if self.editField1.text():
-            newData = {"name": self.editField1.text(), "year": self.editField2.text(),
+            newData = {"id": self.row, "name": self.editField1.text(), "year": self.editField2.text(),
                        "photo": self.newImagePath, "course": self.editField3.text(), "group": self.editField4.text()}
             json_object = json.dumps(newData, indent=4)
             with open("save.json", "w") as outfile:
                 outfile.write(json_object)
             infoMessageBox(title="Saving", message="Data was saved")
-            self.communicate.buttonClicked.emit()
+            self.signal.emit()
             print("emit signal")
         else:
             QMessageBox.critical(

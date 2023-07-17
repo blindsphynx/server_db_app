@@ -24,16 +24,17 @@ def get():
 def post():
     if request.method == 'POST':
         new_data = request.get_json(force=True)
+        id_ = new_data['id']
         name = new_data['name']
         year = new_data['year']
-        picture = new_data['picture']
+        photo = new_data['photo']
         course = new_data['course']
-        gruppa = new_data['gruppa']
+        group = new_data['group']
         query = f"INSERT INTO students(id, name, year, photo, course, gruppa) " \
-                f"VALUES(6, '{name}', {year}, '{picture}', {course}, {gruppa});"
-        # query = "delete from students where name='Petrov Petr'"
+                f"VALUES({id_}, '{name}', {year}, '{photo}', {course}, {group});"
+        # query = "DELETE FROM students WHERE name='Kira'"
         writeToDatabase(query, DBcursor)
-        return jsonify(id=6, name=name, year=year, picture=picture, course=course, gruppa=gruppa), 201
+        return jsonify(id=6, name=name, year=year, picture=photo, course=course, gruppa=group), 201
 
 
 def connect_to_postgesql(connection, cursor):

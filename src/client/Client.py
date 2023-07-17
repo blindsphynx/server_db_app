@@ -1,10 +1,15 @@
+import json
+
+from PyQt5.QtCore import pyqtSlot, pyqtSignal
 from PyQt5.QtWidgets import QVBoxLayout, QPushButton, QWidget, QHBoxLayout
-from TextEditWidget import TextEdit, Communicate
+from TextEditWidget import TextEdit
 import requests
 from TableWidget import MyTable
 
 
 class DatabaseClient(QWidget):
+    signal = pyqtSignal()
+
     def __init__(self, parent=None):
         super().__init__(parent)
         self.subwindow = None
@@ -13,16 +18,12 @@ class DatabaseClient(QWidget):
         self.host = "http://localhost:8000/"
 
         mainLayout = QHBoxLayout()
-        table = self.getRequest().json()
-        self.view = MyTable(table)
+        self.table = self.getRequest().json()
+        self.view = MyTable(self.table)
         mainLayout.addWidget(self.view)
 
         self.setLayout(mainLayout)
         buttonLayout = QVBoxLayout()
-        self.view.showTable()
-
-        self.communicate = Communicate()
-        self.communicate.buttonClicked.connect(self.view.update)
 
         newButton = QPushButton("New record")
         newButton.clicked.connect(self.view.addNewRow)
@@ -39,6 +40,21 @@ class DatabaseClient(QWidget):
         mainLayout.addLayout(buttonLayout)
         self.setLayout(mainLayout)
 
+    @pyqtSlot()
+    def clickedButton(self):
+        print("click!")
+        f = open("save.json")
+        data = json.load(f)
+        for i in range(len(self.table)):
+            if self.table[i]["id"] == data["id"]:
+                self.table[i] = data
+                break
+            else:
+                self.table.append(data)
+                break
+        self.view.showTable(self.table)
+        self.postRequest(data)
+
     def createSubwindow(self):
         cells = {}
         fields = ["name", "year", "course", "group"]
@@ -53,12 +69,10 @@ class DatabaseClient(QWidget):
                 for i in range(len(selected)):
                     cells.update({fields[i]: self.view.selectedItems()[i].text()})
                     cells.update({"photo": path})
-                # else:
-                #     for i in range(len(fields)):
-                #         cells.update({fields[i]: ""})
             else:
                 cells = {"name": "", "year": "", "photo": "", "course": "", "group": ""}
-            self.subwindow = TextEdit(cells)
+            self.subwindow = TextEdit(cells, currentRow)
+            self.subwindow.signal.connect(self.clickedButton)
             self.subwindow.show()
 
     def getRequest(self):

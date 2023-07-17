@@ -1,4 +1,4 @@
-from PyQt5.QtCore import Qt, QDir
+from PyQt5.QtCore import Qt, QDir, pyqtSlot, pyqtSignal
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtWidgets import QTableWidgetItem, QLabel, QTableWidget, QAbstractItemView
 import json
@@ -21,18 +21,22 @@ def getImageLabel(path):
 
 
 class MyTable(QTableWidget):
+    signal = pyqtSignal()
+
     def __init__(self, tableData, parent=None):
         super().__init__(parent)
         self.setColumnCount(5)
         self.setHorizontalHeaderLabels(["Name", "Year", "Photo", "Course", "Group"])
         self.data = tableData
         self.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.showTable(self.data)
 
     def addNewRow(self):
         rowCount = self.rowCount()
         self.insertRow(rowCount)
         self.setItem(rowCount, 0, QTableWidgetItem(" "))
 
+    @pyqtSlot()
     def removeOneRow(self):
         selected = self.selectedItems()
         if selected:
@@ -44,10 +48,12 @@ class MyTable(QTableWidget):
                 json_object = json.dumps(newData, indent=4)
                 with open("delete.json", "w") as outfile:
                     outfile.write(json_object)
-                # signal about post request
+                # self.signal.emit("Remove Signal")
             self.removeRow(self.currentRow())
 
-    def showTable(self):
+    def showTable(self, newData):
+        print(self.data)
+        self.data = newData
         records = len(self.data)
         for i in range(records):
             rows = self.rowCount()

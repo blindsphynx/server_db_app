@@ -1,7 +1,8 @@
 {
-    "name": "Ivanov Ivan",
-    "year": "2002",
-    "photo": "/home/vilka/Pictures/Wallpapers/happiness-ubuntu-wallpaper-preview.jpg",
-    "course": "2",
-    "group": "211"
+    "id": 7,
+    "name": "Kira Soldatova",
+    "year": "2000",
+    "photo": "",
+    "course": "5",
+    "group": "345"
 }
