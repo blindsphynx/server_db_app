@@ -4,6 +4,7 @@ from flask import Flask, request, jsonify
 import psycopg2
 
 server = Flask(__name__)
+# server.config.from_pyfile("config.py")
 DBconnection = [None]
 DBcursor = [None]
 
@@ -32,11 +33,22 @@ def post():
         group = new_data['group']
         query = f"INSERT INTO students(id, name, year, photo, course, gruppa) " \
                 f"VALUES({id_}, '{name}', {year}, '{photo}', {course}, {group});"
-        # query = "DELETE FROM students WHERE name='Kira'"
-        writeToDatabase(query, DBcursor)
-        return jsonify(id=6, name=name, year=year, picture=photo, course=course, gruppa=group), 201
+        queryToDatabase(query, DBcursor)
+        return jsonify(id=id_, name=name, year=year, picture=photo, course=course, gruppa=group), 201
 
 
+@server.route('/delete-data', methods=['DELETE'])
+def delete():
+    if request.method == 'DELETE':
+        new_data = request.get_json(force=True)
+        print("data:", new_data)
+        name = new_data['name']
+        query = f"DELETE FROM students WHERE name='{name}'"
+        queryToDatabase(query, DBcursor)
+        return "", 204
+
+
+# @server.run(debug=True)
 def connect_to_postgesql(connection, cursor):
     connection[0] = psycopg2.connect(dbname='postgres1', user='user',
                                      password='pyro127', host='localhost', port='5432')
@@ -59,9 +71,9 @@ def shutdown_DB_connection(connection):
     print("[INFO] PostgreSQL connection closed")
 
 
-def writeToDatabase(query, cursor):
+def queryToDatabase(query, cursor):
     cursor[0].execute(query)
-    print("[INFO] Data was added to the database")
+    print("[INFO] Query was sent to the database")
 
 
 def readFromDatabase(query, cursor):

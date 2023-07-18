@@ -1,10 +1,9 @@
-import json
-
 from PyQt5.QtCore import pyqtSlot, pyqtSignal
 from PyQt5.QtWidgets import QVBoxLayout, QPushButton, QWidget, QHBoxLayout
-from TextEditWidget import TextEdit
 import requests
+import json
 from TableWidget import MyTable
+from TextEditWidget import TextEdit
 
 
 class DatabaseClient(QWidget):
@@ -37,12 +36,13 @@ class DatabaseClient(QWidget):
         editButton.clicked.connect(self.createSubwindow)
         buttonLayout.addWidget(editButton)
 
+        self.view.signal.connect(self.clickedRemoveButton)
+
         mainLayout.addLayout(buttonLayout)
         self.setLayout(mainLayout)
 
     @pyqtSlot()
-    def clickedButton(self):
-        print("click!")
+    def clickedSaveButton(self):
         f = open("save.json")
         data = json.load(f)
         for i in range(len(self.table)):
@@ -55,6 +55,12 @@ class DatabaseClient(QWidget):
                 continue
         self.view.showTable(self.table)
         self.postRequest(data)
+
+    @pyqtSlot()
+    def clickedRemoveButton(self):
+        f = open("delete.json")
+        data = json.load(f)
+        self.deleteRequest(data)
 
     def createSubwindow(self):
         cells = {}
@@ -73,7 +79,7 @@ class DatabaseClient(QWidget):
             else:
                 cells = {"name": "", "year": "", "photo": "", "course": "", "group": ""}
             self.subwindow = TextEdit(cells, currentRow)
-            self.subwindow.signal.connect(self.clickedButton)
+            self.subwindow.signal.connect(self.clickedSaveButton)
             self.subwindow.show()
 
     def getRequest(self):
@@ -83,4 +89,7 @@ class DatabaseClient(QWidget):
     def postRequest(self, new_data):
         hdrs = {"Content-Type": "application/json; charset=utf-8", "Accept": "application/json"}
         req = requests.post(self.host + "/post-data", json=new_data, headers=hdrs)
-        # print(req.headers)
+
+    def deleteRequest(self, data):
+        req = requests.delete(self.host + "/delete-data", json=data)
+        return req

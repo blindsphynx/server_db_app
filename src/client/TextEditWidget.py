@@ -93,13 +93,14 @@ class TextEdit(QWidget):
     def saveButtonClicked(self):
         if self.editField1.text():
             newData = {"id": self.row, "name": self.editField1.text(), "year": self.editField2.text(),
-                       "photo": self.newImagePath, "course": self.editField3.text(), "group": self.editField4.text()}
+                       "photo": self.newImagePath, "course": self.editField3.text(),
+                       "group": self.editField4.text()}
             json_object = json.dumps(newData, indent=4)
             with open("save.json", "w") as outfile:
                 outfile.write(json_object)
             infoMessageBox(title="Saving", message="Data was saved")
             self.signal.emit()
-            print("emit signal")
+            print("emit save signal")
         else:
             QMessageBox.critical(
                 None,

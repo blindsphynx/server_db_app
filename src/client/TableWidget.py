@@ -53,12 +53,10 @@ class MyTable(QTableWidget):
             self.removeRow(self.currentRow())
 
     def showTable(self, newData):
-        print(self.data)
         self.data = newData
         records = len(self.data)
         for i in range(records):
-            rows = self.rowCount()
-            self.setRowCount(rows + 1)
+            self.setRowCount(records)
             for num in range(records):
                 self.setItem(num, 0, QTableWidgetItem(str(self.data[num]["name"])))
                 self.setItem(num, 1, QTableWidgetItem(str(self.data[num]["year"])))
