@@ -1,10 +1,13 @@
 from PyQt5.QtCore import Qt, QDir, pyqtSlot, pyqtSignal
-from PyQt5.QtGui import QPixmap
+from PyQt5.QtGui import QPixmap, QStandardItemModel
 from PyQt5.QtWidgets import QTableWidgetItem, QLabel, QTableWidget, QAbstractItemView
 import json
+import os
 
 
 def getImageLabel(path):
+    path = os.path.basename(path)
+    print(path)
     with open(QDir.currentPath() + "/client_pictures/" + path, "rb") as image:
         file = image.read()
         b = bytearray(file)

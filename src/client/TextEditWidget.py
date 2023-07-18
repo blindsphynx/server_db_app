@@ -1,3 +1,5 @@
+import base64
+
 from PyQt5.QtCore import QSize, QObject, pyqtSignal, pyqtSlot
 from PyQt5.QtWidgets import QMessageBox, QFileDialog, QLabel, QHBoxLayout, QVBoxLayout, QPushButton, QLineEdit, QWidget
 import json
@@ -92,9 +94,11 @@ class TextEdit(QWidget):
     @pyqtSlot()
     def saveButtonClicked(self):
         if self.editField1.text():
+            with open(self.newImagePath, "rb") as img:
+                string = base64.b64encode(img.read()).decode('utf-8')
             newData = {"id": self.row, "name": self.editField1.text(), "year": self.editField2.text(),
                        "photo": self.newImagePath, "course": self.editField3.text(),
-                       "group": self.editField4.text()}
+                       "group": self.editField4.text(), "binary_photo": string}
             json_object = json.dumps(newData, indent=4)
             with open("save.json", "w") as outfile:
                 outfile.write(json_object)

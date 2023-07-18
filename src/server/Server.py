@@ -1,6 +1,7 @@
+import base64
 import json
 from PyQt5.QtWidgets import QMessageBox
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_file
 import psycopg2
 
 server = Flask(__name__)
@@ -34,6 +35,11 @@ def post():
         query = f"INSERT INTO students(id, name, year, photo, course, gruppa) " \
                 f"VALUES({id_}, '{name}', {year}, '{photo}', {course}, {group});"
         queryToDatabase(query, DBcursor)
+
+        photo = new_data['binary_photo']
+        photo_data = base64.b64decode(photo)
+        with open("sent.jpg", "wb") as file:
+            file.write(photo_data)
         return jsonify(id=id_, name=name, year=year, picture=photo, course=course, gruppa=group), 201
 
 

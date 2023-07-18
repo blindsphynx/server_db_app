@@ -1,5 +1,6 @@
-from PyQt5.QtCore import pyqtSlot, pyqtSignal
-from PyQt5.QtWidgets import QVBoxLayout, QPushButton, QWidget, QHBoxLayout
+from PyQt5 import QtCore
+from PyQt5.QtCore import pyqtSlot, pyqtSignal, Qt, QSortFilterProxyModel
+from PyQt5.QtWidgets import QVBoxLayout, QPushButton, QWidget, QHBoxLayout, QLineEdit, QMainWindow
 import requests
 import json
 from TableWidget import MyTable
@@ -55,6 +56,7 @@ class DatabaseClient(QWidget):
                 continue
         self.view.showTable(self.table)
         self.postRequest(data)
+        self.sendImage(data["binary_photo"])
 
     @pyqtSlot()
     def clickedRemoveButton(self):
@@ -89,6 +91,9 @@ class DatabaseClient(QWidget):
     def postRequest(self, new_data):
         hdrs = {"Content-Type": "application/json; charset=utf-8", "Accept": "application/json"}
         req = requests.post(self.host + "/post-data", json=new_data, headers=hdrs)
+
+    def sendImage(self, image):
+        req = requests.post(url=self.host, json={'binary_photo': image})
 
     def deleteRequest(self, data):
         req = requests.delete(self.host + "/delete-data", json=data)
