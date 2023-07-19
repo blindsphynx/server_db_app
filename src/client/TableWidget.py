@@ -1,5 +1,5 @@
 from PyQt5.QtCore import Qt, QDir, pyqtSlot, pyqtSignal
-from PyQt5.QtGui import QPixmap, QStandardItemModel
+from PyQt5.QtGui import QPixmap
 from PyQt5.QtWidgets import QTableWidgetItem, QLabel, QTableWidget, QAbstractItemView
 import json
 import os
@@ -7,7 +7,6 @@ import os
 
 def getImageLabel(path):
     path = os.path.basename(path)
-    print(path)
     with open(QDir.currentPath() + "/client_pictures/" + path, "rb") as image:
         file = image.read()
         b = bytearray(file)
@@ -45,9 +44,9 @@ class MyTable(QTableWidget):
         if selected:
             if self.currentRow() < len(self.data):
                 data = self.data[self.currentRow()]
-                newData = {"name": data["name"], "year": data["year"],
-                           "photo": data["photo"], "course": data["course"],
-                           "group": data["group"]}
+                newData = {"name": data["name"], "year": int(data["year"]),
+                           "photo": data["photo"], "course": int(data["course"]),
+                           "group": int(data["group"])}
                 json_object = json.dumps(newData, indent=4)
                 with open("delete.json", "w") as outfile:
                     outfile.write(json_object)

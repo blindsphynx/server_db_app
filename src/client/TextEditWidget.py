@@ -1,4 +1,5 @@
 import base64
+import os
 
 from PyQt5.QtCore import QSize, QObject, pyqtSignal, pyqtSlot
 from PyQt5.QtWidgets import QMessageBox, QFileDialog, QLabel, QHBoxLayout, QVBoxLayout, QPushButton, QLineEdit, QWidget
@@ -45,7 +46,7 @@ class TextEdit(QWidget):
         self.saveButton.clicked.connect(self.saveButtonClicked)
         self.cancelButton.clicked.connect(self.cancelButtonClicked)
         self.uploadImageButton.clicked.connect(self.uploadButtonClicked)
-        self.newImagePath = ""
+        self.ImagePath = self.cells["photo"]
 
     def setLayouts(self):
         mainLayout = QVBoxLayout()
@@ -94,11 +95,15 @@ class TextEdit(QWidget):
     @pyqtSlot()
     def saveButtonClicked(self):
         if self.editField1.text():
-            with open(self.newImagePath, "rb") as img:
-                string = base64.b64encode(img.read()).decode('utf-8')
-            newData = {"id": self.row, "name": self.editField1.text(), "year": self.editField2.text(),
-                       "photo": self.newImagePath, "course": self.editField3.text(),
-                       "group": self.editField4.text(), "binary_photo": string}
+            string = " "
+            if self.ImagePath:
+                self.ImagePath = "client_pictures/" + os.path.basename(self.ImagePath)
+                with open(self.ImagePath, "rb") as img:
+                    string = base64.b64encode(img.read()).decode('utf-8')
+            newData = {"id": self.row, "name": self.editField1.text(),
+                       "year": int(self.editField2.text()), "photo": self.ImagePath,
+                       "course": int(self.editField3.text()), "group": int(self.editField4.text()),
+                       "binary_photo": string}
             json_object = json.dumps(newData, indent=4)
             with open("save.json", "w") as outfile:
                 outfile.write(json_object)
@@ -121,5 +126,5 @@ class TextEdit(QWidget):
 
     def uploadButtonClicked(self):
         image = QFileDialog.getOpenFileName(None, 'OpenFile', '', "Image file(*.jpg)")
-        self.newImagePath = image[0]
-        self.imageName.setText(self.newImagePath)
+        self.ImagePath = image[0]
+        self.imageName.setText(self.ImagePath)

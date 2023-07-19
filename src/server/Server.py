@@ -28,12 +28,14 @@ def post():
         new_data = request.get_json(force=True)
         id_ = new_data['id']
         name = new_data['name']
-        year = new_data['year']
         photo = new_data['photo']
+        year = new_data['year']
         course = new_data['course']
         group = new_data['group']
         query = f"INSERT INTO students(id, name, year, photo, course, gruppa) " \
-                f"VALUES({id_}, '{name}', {year}, '{photo}', {course}, {group});"
+                f"VALUES({id_}, '{name}', {year}, '{photo}', {course}, {group}) " \
+                f"ON CONFLICT (id) DO UPDATE SET name='{name}', year={year}, " \
+                f"photo='{photo}', course={course}, gruppa={group} WHERE students.id={id_};"
         queryToDatabase(query, DBcursor)
 
         photo = new_data['binary_photo']
