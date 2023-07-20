@@ -1,7 +1,8 @@
 import base64
 import os
 
-from PyQt5.QtCore import QSize, QObject, pyqtSignal, pyqtSlot
+from PyQt5.QtCore import QSize, QObject, pyqtSignal, pyqtSlot, QRegExp
+from PyQt5.QtGui import QRegExpValidator
 from PyQt5.QtWidgets import QMessageBox, QFileDialog, QLabel, QHBoxLayout, QVBoxLayout, QPushButton, QLineEdit, QWidget
 import json
 import qtawesome as qta
@@ -33,6 +34,17 @@ class TextEdit(QWidget):
         self.editField2 = QLineEdit(self)
         self.editField3 = QLineEdit(self)
         self.editField4 = QLineEdit(self)
+
+        reg_ex_text = QRegExp("\D+")
+        text_validator = QRegExpValidator(reg_ex_text, self.editField1)
+        self.editField1.setValidator(text_validator)
+
+        reg_ex_num = QRegExp("[0-9]+.?")
+        num_validator = QRegExpValidator(reg_ex_num, self.editField2)
+        self.editField2.setValidator(num_validator)
+        self.editField3.setValidator(num_validator)
+        self.editField4.setValidator(num_validator)
+
         self.image = QLabel()
         icon = qta.icon("fa5s.camera", color='blue')
         self.image.setPixmap(icon.pixmap(QSize(24, 24)))
