@@ -1,6 +1,7 @@
 from PyQt5.QtCore import pyqtSlot, pyqtSignal
-from PyQt5.QtWidgets import QVBoxLayout, QPushButton, QWidget, QHBoxLayout, QLineEdit, QMainWindow, QAbstractItemView
+from PyQt5.QtWidgets import QVBoxLayout, QPushButton, QWidget, QHBoxLayout
 import requests
+from requests.auth import HTTPBasicAuth
 import json
 from TableWidget import MyTable
 from TextEditWidget import TextEdit
@@ -21,6 +22,7 @@ class DatabaseClient(QWidget):
         self.resize(1100, 500)
         self.host = "http://localhost:8000/"
 
+        self.authentification()
         mainLayout = QHBoxLayout()
         self.table = self.getRequest().json()
         self.view = MyTable(self.table)
@@ -45,6 +47,12 @@ class DatabaseClient(QWidget):
 
         mainLayout.addLayout(buttonLayout)
         self.setLayout(mainLayout)
+
+    def authentification(self):
+        response = requests.get(self.host, auth=("user", "pyro127"))
+        print(response.status_code)
+        print(response.text)
+        print(response.headers)
 
     @pyqtSlot()
     def clickedSaveButton(self):

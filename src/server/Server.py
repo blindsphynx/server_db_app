@@ -1,18 +1,25 @@
 from PyQt5.QtWidgets import QMessageBox
-from flask import Flask, request, jsonify, send_file
+from flask import Flask, request, jsonify
 import psycopg2
 import base64
 import json
 import os
 import logging
+from utils import auth_required
 
 
 server = Flask(__name__)
-# server.config.from_pyfile("config.py")
+
 DBconnection = [None]
 DBcursor = [None]
 logging.basicConfig(level=logging.DEBUG, filename="server.log", filemode="w",
                     encoding="utf-8", format="%(asctime)s %(levelname)s %(message)s")
+
+
+@server.route("/")
+@auth_required
+def index():
+    return "<h1>Hello, World!</h1>"
 
 
 @server.route('/')
