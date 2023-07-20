@@ -1,6 +1,8 @@
-from PyQt5.QtCore import Qt, QDir, pyqtSlot, pyqtSignal
+from PyQt5 import QtCore
+from PyQt5.QtCore import QDir, pyqtSlot, pyqtSignal
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtWidgets import QTableWidgetItem, QLabel, QTableWidget, QAbstractItemView
+from operator import xor
 import json
 import os
 
@@ -16,7 +18,6 @@ def getImageLabel(path):
         pixmap = QPixmap()
         pixmap.loadFromData(b, 'jpg')
         imglabel.setPixmap(pixmap)
-        imglabel.setFixedWidth(150)
         return imglabel
     except Exception as err:
         print(err)
@@ -31,6 +32,8 @@ class MyTable(QTableWidget):
         self.setHorizontalHeaderLabels(["Name", "Year", "Photo", "Course", "Group"])
         self.data = tableData
         self.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.setMinimumHeight(800)
+        self.setMinimumWidth(1100)
         self.showTable(self.data)
 
     def addNewRow(self):
@@ -60,15 +63,25 @@ class MyTable(QTableWidget):
         for i in range(records):
             self.setRowCount(records)
             for num in range(records):
-                self.setItem(num, 0, QTableWidgetItem(str(self.data[num]["name"])))
-                self.setItem(num, 1, QTableWidgetItem(str(self.data[num]["year"])))
+                name = QTableWidgetItem(str(self.data[num]["name"]))
+                name.setFlags(xor(name.flags(), QtCore.Qt.ItemIsEditable))
+                year = QTableWidgetItem(str(self.data[num]["year"]))
+                year.setFlags(xor(year.flags(), QtCore.Qt.ItemIsEditable))
+                course = QTableWidgetItem(str(self.data[num]["course"]))
+                course.setFlags(xor(course.flags(), QtCore.Qt.ItemIsEditable))
+                group = QTableWidgetItem(str(self.data[num]["group"]))
+                group.setFlags(xor(group.flags(), QtCore.Qt.ItemIsEditable))
+                self.setItem(num, 0, name)
+                self.setItem(num, 1, year)
                 if self.data[num]["photo"]:
                     item = getImageLabel(self.data[num]["photo"])
                     self.setCellWidget(num, 2, item)
                 else:
                     image = QTableWidgetItem()
-                    image.setFlags(Qt.ItemIsSelectable)
+                    image.setFlags(xor(image.flags(), QtCore.Qt.ItemIsEditable))
                     self.setItem(num, 2, image)
-                self.setItem(num, 3, QTableWidgetItem(str(self.data[num]["course"])))
-                self.setItem(num, 4, QTableWidgetItem(str(self.data[num]["group"])))
-        self.resizeColumnsToContents()
+                self.setItem(num, 3, course)
+                self.setItem(num, 4, group)
+                self.setRowHeight(num, 150)
+        # self.resizeColumnsToContents()
+        self.setColumnWidth(0, 300)

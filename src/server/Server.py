@@ -1,16 +1,18 @@
-import base64
-import json
-import os
-
 from PyQt5.QtWidgets import QMessageBox
 from flask import Flask, request, jsonify, send_file
 import psycopg2
+import base64
+import json
+import os
+import logging
+
 
 server = Flask(__name__)
 # server.config.from_pyfile("config.py")
 DBconnection = [None]
 DBcursor = [None]
-
+logging.basicConfig(level=logging.DEBUG, filename="logging_file.log", filemode="w",
+                    encoding="utf-8", format="%(asctime)s %(levelname)s %(message)s")
 
 @server.route('/')
 def home():
