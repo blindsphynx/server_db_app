@@ -44,9 +44,9 @@ class MyTable(QTableWidget):
         if selected:
             if self.currentRow() < len(self.data):
                 data = self.data[self.currentRow()]
-                newData = {"name": data["name"], "year": int(data["year"]),
-                           "photo": data["photo"], "course": int(data["course"]),
-                           "group": int(data["group"])}
+                newData = {"name": data["name"], "year": data["year"],
+                           "photo": data["photo"], "course": data["course"],
+                           "group": data["group"]}
                 json_object = json.dumps(newData, indent=4)
                 with open("delete.json", "w") as outfile:
                     outfile.write(json_object)

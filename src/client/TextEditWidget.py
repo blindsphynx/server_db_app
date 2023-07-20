@@ -101,8 +101,8 @@ class TextEdit(QWidget):
                 with open(self.ImagePath, "rb") as img:
                     string = base64.b64encode(img.read()).decode('utf-8')
             newData = {"id": self.row, "name": self.editField1.text(),
-                       "year": int(self.editField2.text()), "photo": self.ImagePath,
-                       "course": int(self.editField3.text()), "group": int(self.editField4.text()),
+                       "year": self.editField2.text(), "photo": self.ImagePath,
+                       "course": self.editField3.text(), "group": self.editField4.text(),
                        "binary_photo": string}
             json_object = json.dumps(newData, indent=4)
             with open("save.json", "w") as outfile:

@@ -1,7 +1,7 @@
 {
-    "name": "Ivanov Ivan",
-    "year": 2002,
-    "photo": null,
-    "course": 2,
-    "group": 211
+    "name": "Kira",
+    "year": null,
+    "photo": "client_pictures/kira.jpg",
+    "course": null,
+    "group": null
 }

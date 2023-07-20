@@ -1,5 +1,7 @@
 import base64
 import json
+import os
+
 from PyQt5.QtWidgets import QMessageBox
 from flask import Flask, request, jsonify, send_file
 import psycopg2
@@ -32,16 +34,22 @@ def post():
         year = new_data['year']
         course = new_data['course']
         group = new_data['group']
+        if year == "":
+            year = "NULL"
+        if course == "":
+            course = "NULL"
+        if group == "":
+            group = "NULL"
         query = f"INSERT INTO students(id, name, year, photo, course, gruppa) " \
                 f"VALUES({id_}, '{name}', {year}, '{photo}', {course}, {group}) " \
                 f"ON CONFLICT (id) DO UPDATE SET name='{name}', year={year}, " \
                 f"photo='{photo}', course={course}, gruppa={group} WHERE students.id={id_};"
         queryToDatabase(query, DBcursor)
-
-        photo = new_data['binary_photo']
-        photo_data = base64.b64decode(photo)
-        with open("sent.jpg", "wb") as file:
-            file.write(photo_data)
+        if photo:
+            binary_photo = new_data['binary_photo']
+            photo_data = base64.b64decode(binary_photo)
+            with open("server_pictures/" + os.path.basename(photo), "wb") as file:
+                file.write(photo_data)
         return jsonify(id=id_, name=name, year=year, picture=photo, course=course, gruppa=group), 201
 
 
