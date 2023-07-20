@@ -1,10 +1,14 @@
-from PyQt5 import QtCore
-from PyQt5.QtCore import pyqtSlot, pyqtSignal, Qt, QSortFilterProxyModel
-from PyQt5.QtWidgets import QVBoxLayout, QPushButton, QWidget, QHBoxLayout, QLineEdit, QMainWindow
+from PyQt5.QtCore import pyqtSlot, pyqtSignal
+from PyQt5.QtWidgets import QVBoxLayout, QPushButton, QWidget, QHBoxLayout, QLineEdit, QMainWindow, QAbstractItemView
 import requests
 import json
 from TableWidget import MyTable
 from TextEditWidget import TextEdit
+import logging
+
+
+logging.basicConfig(level=logging.DEBUG, filename="client.log", filemode="w",
+                    encoding="utf-8", format="%(asctime)s %(levelname)s %(message)s")
 
 
 class DatabaseClient(QWidget):
@@ -80,6 +84,7 @@ class DatabaseClient(QWidget):
                     cells.update({"photo": path})
             else:
                 cells = {"name": "", "year": "", "photo": "", "course": "", "group": ""}
+            print("cells:", cells)
             self.subwindow = TextEdit(cells, currentRow)
             self.subwindow.signal.connect(self.clickedSaveButton)
             self.subwindow.show()

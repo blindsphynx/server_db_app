@@ -39,7 +39,8 @@ class MyTable(QTableWidget):
     def addNewRow(self):
         rowCount = self.rowCount()
         self.insertRow(rowCount)
-        self.setItem(rowCount, 0, QTableWidgetItem(" "))
+        for i in range(self.columnCount() - 1):
+            self.setItem(rowCount, i, QTableWidgetItem(" "))
 
     @pyqtSlot()
     def removeOneRow(self):
@@ -78,7 +79,7 @@ class MyTable(QTableWidget):
                     self.setCellWidget(num, 2, item)
                 else:
                     image = QTableWidgetItem()
-                    image.setFlags(xor(image.flags(), QtCore.Qt.ItemIsEditable))
+                    image.setFlags(QtCore.Qt.ItemIsEnabled)
                     self.setItem(num, 2, image)
                 self.setItem(num, 3, course)
                 self.setItem(num, 4, group)

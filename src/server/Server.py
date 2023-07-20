@@ -11,8 +11,9 @@ server = Flask(__name__)
 # server.config.from_pyfile("config.py")
 DBconnection = [None]
 DBcursor = [None]
-logging.basicConfig(level=logging.DEBUG, filename="logging_file.log", filemode="w",
+logging.basicConfig(level=logging.DEBUG, filename="server.log", filemode="w",
                     encoding="utf-8", format="%(asctime)s %(levelname)s %(message)s")
+
 
 @server.route('/')
 def home():
@@ -59,7 +60,6 @@ def post():
 def delete():
     if request.method == 'DELETE':
         new_data = request.get_json(force=True)
-        print("data:", new_data)
         name = new_data['name']
         query = f"DELETE FROM students WHERE name='{name}'"
         queryToDatabase(query, DBcursor)
@@ -100,6 +100,9 @@ def readFromDatabase(query, cursor):
     table = []
     for line in records:
         data = {"id": line[0], "name": line[1], "year": line[2], "photo": line[3], "course": line[4], "group": line[5]}
+        for key in data:
+            if data[key] is None:
+                data[key] = ""
         table.append(data)
     result = json.dumps(table)
     return result
