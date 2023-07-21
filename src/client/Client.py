@@ -19,7 +19,7 @@ class DatabaseClient(QWidget):
         super().__init__(parent)
         self.subwindow = None
         self.setWindowTitle("Database Students")
-        self.resize(1100, 500)
+        self.resize(600, 400)
         self.host = "http://localhost:8000/"
 
         self.authentification()
@@ -52,7 +52,7 @@ class DatabaseClient(QWidget):
         response = requests.get(self.host, auth=("user", "pyro127"))
         print(response.status_code)
         print(response.text)
-        print(response.headers)
+        # print(response.headers)
 
     @pyqtSlot()
     def clickedSaveButton(self):
@@ -92,7 +92,6 @@ class DatabaseClient(QWidget):
                     cells.update({"photo": path})
             else:
                 cells = {"name": "", "year": "", "photo": "", "course": "", "group": ""}
-            print("cells:", cells)
             self.subwindow = TextEdit(cells, currentRow)
             self.subwindow.signal.connect(self.clickedSaveButton)
             self.subwindow.show()

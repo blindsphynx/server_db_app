@@ -107,11 +107,11 @@ class TextEdit(QWidget):
     @pyqtSlot()
     def saveButtonClicked(self):
         if self.editField1.text():
-            string = " "
-            if self.ImagePath:
-                self.ImagePath = "client_pictures/" + os.path.basename(self.ImagePath)
-                with open(self.ImagePath, "rb") as img:
-                    string = base64.b64encode(img.read()).decode('utf-8')
+            string = ""
+            # if self.ImagePath:
+            #     self.ImagePath = os.path.basename(self.ImagePath)
+            #     with open(self.ImagePath, "rb") as img:
+            #         string = base64.b64encode(img.read()).decode('utf-8')
             newData = {"id": self.row, "name": self.editField1.text(),
                        "year": self.editField2.text(), "photo": self.ImagePath,
                        "course": self.editField3.text(), "group": self.editField4.text(),

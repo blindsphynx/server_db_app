@@ -1,22 +1,19 @@
 from PyQt5 import QtCore
-from PyQt5.QtCore import QDir, pyqtSlot, pyqtSignal
+from PyQt5.QtCore import pyqtSlot, pyqtSignal
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtWidgets import QTableWidgetItem, QLabel, QTableWidget, QAbstractItemView
 from operator import xor
 import json
-import os
+import base64
 
 
-def getImageLabel(path):
-    path = os.path.basename(path)
-    with open(QDir.currentPath() + "/client_pictures/" + path, "rb") as image:
-        file = image.read()
-        b = bytearray(file)
+def getImageLabel(img):
+    image = base64.b64decode(img)
     try:
         imglabel = QLabel(" ")
         imglabel.setScaledContents(True)
         pixmap = QPixmap()
-        pixmap.loadFromData(b, 'jpg')
+        pixmap.loadFromData(image, 'jpg')
         imglabel.setPixmap(pixmap)
         return imglabel
     except Exception as err:
@@ -32,8 +29,8 @@ class MyTable(QTableWidget):
         self.setHorizontalHeaderLabels(["Name", "Year", "Photo", "Course", "Group"])
         self.data = tableData
         self.setSelectionBehavior(QAbstractItemView.SelectRows)
-        self.setMinimumHeight(800)
-        self.setMinimumWidth(1100)
+        self.setMinimumHeight(500)
+        self.setMinimumWidth(700)
         self.showTable(self.data)
 
     def addNewRow(self):
@@ -75,12 +72,12 @@ class MyTable(QTableWidget):
                 self.setItem(num, 0, name)
                 self.setItem(num, 1, year)
                 if self.data[num]["photo"]:
-                    item = getImageLabel(self.data[num]["photo"])
+                    item = getImageLabel(self.data[num]["binary_photo"])
                     self.setCellWidget(num, 2, item)
                 else:
-                    image = QTableWidgetItem()
-                    image.setFlags(QtCore.Qt.ItemIsEnabled)
-                    self.setItem(num, 2, image)
+                    item = QTableWidgetItem()
+                    item.setFlags(QtCore.Qt.ItemIsEnabled)
+                    self.setItem(num, 2, item)
                 self.setItem(num, 3, course)
                 self.setItem(num, 4, group)
                 self.setRowHeight(num, 150)

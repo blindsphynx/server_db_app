@@ -1,3 +1,4 @@
+from PyQt5.QtCore import QDir
 from PyQt5.QtWidgets import QMessageBox
 from flask import Flask, request, jsonify
 import psycopg2
@@ -79,12 +80,12 @@ def connect_to_postgesql(connection, cursor):
                                      password='pyro127', host='localhost', port='5432')
     connection[0].autocommit = True
     cursor[0] = connection[0].cursor()
-    if not connection[0]:
+    if connection[0] is None:
         QMessageBox.critical(
             None,
             "Error!",
             "Unable to connect a database\n\n"
-            "Database Error: %s" % connection[0].lastError().databaseText(),
+            "Database Error: %s" % connection[0].DataError().databaseText(),
         )
         return False
     print("[INFO] PostgreSQL connection established")
@@ -110,6 +111,12 @@ def readFromDatabase(query, cursor):
         for key in data:
             if data[key] is None:
                 data[key] = ""
+        if data["photo"]:
+            path = os.path.curdir + "/server_pictures/" + data["photo"]
+            image = ""
+            with open(path, "rb") as img:
+                image = base64.encodebytes(img.read()).decode("utf-8")
+            data.update({"binary_photo": image})
         table.append(data)
     result = json.dumps(table)
     return result
