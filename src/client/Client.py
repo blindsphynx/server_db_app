@@ -22,9 +22,9 @@ class DatabaseClient(QWidget):
         self.resize(600, 400)
         self.host = "http://localhost:8000/"
 
-        self.authentification()
+        self.__authentification()
         mainLayout = QHBoxLayout()
-        self.table = self.getRequest().json()
+        self.table = self.__getRequest().json()
         self.view = MyTable(self.table)
         mainLayout.addWidget(self.view)
 
@@ -40,22 +40,21 @@ class DatabaseClient(QWidget):
         buttonLayout.addWidget(removeButton)
 
         editButton = QPushButton("Edit")
-        editButton.clicked.connect(self.createSubwindow)
+        editButton.clicked.connect(self.__createSubwindow)
         buttonLayout.addWidget(editButton)
 
-        self.view.signal.connect(self.clickedRemoveButton)
+        self.view.signal.connect(self.__clickedRemoveButton)
 
         mainLayout.addLayout(buttonLayout)
         self.setLayout(mainLayout)
 
-    def authentification(self):
+    def __authentification(self):
         response = requests.get(self.host, auth=("user", "pyro127"))
         print(response.status_code)
         print(response.text)
-        # print(response.headers)
 
     @pyqtSlot()
-    def clickedSaveButton(self):
+    def __clickedSaveButton(self):
         f = open("save.json")
         data = json.load(f)
         for i in range(len(self.table)):
@@ -67,16 +66,16 @@ class DatabaseClient(QWidget):
             else:
                 continue
         self.view.showTable(self.table)
-        self.postRequest(data)
-        self.sendImage(data["binary_photo"])
+        self.__postRequest(data)
+        self.__sendImage(data["binary_photo"])
 
     @pyqtSlot()
-    def clickedRemoveButton(self):
+    def __clickedRemoveButton(self):
         f = open("delete.json")
         data = json.load(f)
-        self.deleteRequest(data)
+        self.__deleteRequest(data)
 
-    def createSubwindow(self):
+    def __createSubwindow(self):
         cells = {}
         fields = ["name", "year", "course", "group"]
         selected = self.view.selectedItems()
@@ -93,20 +92,20 @@ class DatabaseClient(QWidget):
             else:
                 cells = {"name": "", "year": "", "photo": "", "course": "", "group": ""}
             self.subwindow = TextEdit(cells, currentRow)
-            self.subwindow.signal.connect(self.clickedSaveButton)
+            self.subwindow.signal.connect(self.__clickedSaveButton)
             self.subwindow.show()
 
-    def getRequest(self):
+    def __getRequest(self):
         req = requests.get(self.host + "/get-data")
         return req
 
-    def postRequest(self, new_data):
+    def __postRequest(self, new_data):
         hdrs = {"Content-Type": "application/json; charset=utf-8", "Accept": "application/json"}
         req = requests.post(self.host + "/post-data", json=new_data, headers=hdrs)
 
-    def sendImage(self, image):
+    def __sendImage(self, image):
         req = requests.post(url=self.host, json={'binary_photo': image})
 
-    def deleteRequest(self, data):
+    def __deleteRequest(self, data):
         req = requests.delete(self.host + "/delete-data", json=data)
         return req

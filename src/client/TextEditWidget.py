@@ -1,10 +1,9 @@
-import base64
-import os
-
-from PyQt5.QtCore import QSize, QObject, pyqtSignal, pyqtSlot, QRegExp
+from PyQt5.QtCore import QSize, pyqtSignal, pyqtSlot, QRegExp
 from PyQt5.QtGui import QRegExpValidator
 from PyQt5.QtWidgets import QMessageBox, QFileDialog, QLabel, QHBoxLayout, QVBoxLayout, QPushButton, QLineEdit, QWidget
 import json
+import base64
+import os
 import qtawesome as qta
 
 
@@ -53,14 +52,14 @@ class TextEdit(QWidget):
         self.cancelButton = QPushButton("Cancel")
         self.uploadImageButton = QPushButton("Upload new photo")
 
-        self.setLayouts()
-        self.setValues()
-        self.saveButton.clicked.connect(self.saveButtonClicked)
-        self.cancelButton.clicked.connect(self.cancelButtonClicked)
-        self.uploadImageButton.clicked.connect(self.uploadButtonClicked)
+        self.__setLayouts()
+        self.__setValues()
+        self.saveButton.clicked.connect(self.__saveButtonClicked)
+        self.cancelButton.clicked.connect(self.__cancelButtonClicked)
+        self.uploadImageButton.clicked.connect(self.__uploadButtonClicked)
         self.ImagePath = self.cells["photo"]
 
-    def setLayouts(self):
+    def __setLayouts(self):
         mainLayout = QVBoxLayout()
         labelsLayout = QVBoxLayout()
         fieldsLayout = QVBoxLayout()
@@ -98,22 +97,21 @@ class TextEdit(QWidget):
         mainLayout.addLayout(buttonsLayout)
         self.setLayout(mainLayout)
 
-    def setValues(self):
+    def __setValues(self):
         self.editField1.setText(self.cells["name"])
         self.editField2.setText(self.cells["year"])
         self.editField3.setText(self.cells["course"])
         self.editField4.setText(self.cells["group"])
 
     @pyqtSlot()
-    def saveButtonClicked(self):
+    def __saveButtonClicked(self):
         if self.editField1.text():
             string = ""
-            # if self.ImagePath:
-            #     self.ImagePath = os.path.basename(self.ImagePath)
-            #     with open(self.ImagePath, "rb") as img:
-            #         string = base64.b64encode(img.read()).decode('utf-8')
+            if self.ImagePath:
+                with open(self.ImagePath, "rb") as img:
+                    string = base64.b64encode(img.read()).decode('utf-8')
             newData = {"id": self.row, "name": self.editField1.text(),
-                       "year": self.editField2.text(), "photo": self.ImagePath,
+                       "year": self.editField2.text(), "photo": os.path.basename(self.ImagePath),
                        "course": self.editField3.text(), "group": self.editField4.text(),
                        "binary_photo": string}
             json_object = json.dumps(newData, indent=4)
@@ -129,14 +127,14 @@ class TextEdit(QWidget):
                 "Required field 'name'"
             )
 
-    def cancelButtonClicked(self):
+    def __cancelButtonClicked(self):
         self.editField1.setText(self.cells["name"])
         self.editField2.setText(self.cells["year"])
         self.editField3.setText(self.cells["course"])
         self.editField4.setText(self.cells["group"])
         infoMessageBox(title="Cancel", message="Changes were canceled")
 
-    def uploadButtonClicked(self):
+    def __uploadButtonClicked(self):
         image = QFileDialog.getOpenFileName(None, 'OpenFile', '', "Image file(*.jpg)")
         self.ImagePath = image[0]
         self.imageName.setText(self.ImagePath)

@@ -1,9 +1,9 @@
 {
-    "id": 4,
-    "name": "hello",
-    "year": "23",
+    "id": 6,
+    "name": "Kira",
+    "year": "2000",
     "photo": "",
-    "course": "23",
-    "group": "23",
-    "binary_photo": " "
+    "course": "",
+    "group": "",
+    "binary_photo": ""
 }

@@ -81,5 +81,4 @@ class MyTable(QTableWidget):
                 self.setItem(num, 3, course)
                 self.setItem(num, 4, group)
                 self.setRowHeight(num, 150)
-        # self.resizeColumnsToContents()
         self.setColumnWidth(0, 300)
