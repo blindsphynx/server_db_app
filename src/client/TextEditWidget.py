@@ -7,18 +7,6 @@ import os
 import qtawesome as qta
 
 
-def infoMessageBox(title, message):
-    msgBox = QMessageBox()
-    msgBox.setIcon(QMessageBox.Information)
-    msgBox.setText(message)
-    msgBox.setWindowTitle(title)
-    msgBox.setStandardButtons(QMessageBox.Ok)
-    msgBox.buttonClicked.connect(msgBox.close)
-    returnValue = msgBox.exec()
-    if returnValue == QMessageBox.Ok:
-        print("OK clicked")
-
-
 class TextEdit(QWidget):
     signal = pyqtSignal()
 
@@ -48,6 +36,7 @@ class TextEdit(QWidget):
         icon = qta.icon("fa5s.camera", color='blue')
         self.image.setPixmap(icon.pixmap(QSize(24, 24)))
         self.imageName = QLabel(self.cells["photo"])
+        print(self.cells)
         self.saveButton = QPushButton("Save")
         self.cancelButton = QPushButton("Cancel")
         self.uploadImageButton = QPushButton("Upload new photo")
@@ -57,7 +46,7 @@ class TextEdit(QWidget):
         self.saveButton.clicked.connect(self.__saveButtonClicked)
         self.cancelButton.clicked.connect(self.__cancelButtonClicked)
         self.uploadImageButton.clicked.connect(self.__uploadButtonClicked)
-        self.ImagePath = self.cells["photo"]
+        self.imagePath = ""
 
     def __setLayouts(self):
         mainLayout = QVBoxLayout()
@@ -103,21 +92,37 @@ class TextEdit(QWidget):
         self.editField3.setText(self.cells["course"])
         self.editField4.setText(self.cells["group"])
 
+    def infoMessageBox(self, title, message):
+        msgBox = QMessageBox()
+        msgBox.setIcon(QMessageBox.Information)
+        msgBox.setText(message)
+        msgBox.setWindowTitle(title)
+        msgBox.setStandardButtons(QMessageBox.Ok)
+        msgBox.buttonClicked.connect(msgBox.close)
+        self.close()
+        returnValue = msgBox.exec()
+        if returnValue == QMessageBox.Ok:
+            print("OK clicked")
+
     @pyqtSlot()
     def __saveButtonClicked(self):
         if self.editField1.text():
             string = ""
-            if self.ImagePath:
-                with open(self.ImagePath, "rb") as img:
+            if self.imagePath != "":
+                with open(self.imagePath, "rb") as img:
                     string = base64.b64encode(img.read()).decode('utf-8')
+                self.imagePath = os.path.basename(self.imagePath)
+            else:
+                self.imagePath = self.cells["photo"]
+                string = self.cells["binary_photo"]
             newData = {"id": self.row, "name": self.editField1.text(),
-                       "year": self.editField2.text(), "photo": os.path.basename(self.ImagePath),
+                       "year": self.editField2.text(), "photo": self.imagePath,
                        "course": self.editField3.text(), "group": self.editField4.text(),
                        "binary_photo": string}
             json_object = json.dumps(newData, indent=4)
             with open("save.json", "w") as outfile:
                 outfile.write(json_object)
-            infoMessageBox(title="Saving", message="Data was saved")
+            self.infoMessageBox(title="Saving", message="Data was saved")
             self.signal.emit()
             print("emit save signal")
         else:
@@ -132,9 +137,9 @@ class TextEdit(QWidget):
         self.editField2.setText(self.cells["year"])
         self.editField3.setText(self.cells["course"])
         self.editField4.setText(self.cells["group"])
-        infoMessageBox(title="Cancel", message="Changes were canceled")
+        self.infoMessageBox(title="Cancel", message="Changes were canceled")
 
     def __uploadButtonClicked(self):
         image = QFileDialog.getOpenFileName(None, 'OpenFile', '', "Image file(*.jpg)")
-        self.ImagePath = image[0]
-        self.imageName.setText(self.ImagePath)
+        self.imagePath = image[0]
+        self.imageName.setText(os.path.basename(self.imagePath))

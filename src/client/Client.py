@@ -31,17 +31,17 @@ class DatabaseClient(QWidget):
         self.setLayout(mainLayout)
         buttonLayout = QVBoxLayout()
 
-        newButton = QPushButton("New record")
-        newButton.clicked.connect(self.view.addNewRow)
-        buttonLayout.addWidget(newButton)
+        self.newButton = QPushButton("New record")
+        self.newButton.clicked.connect(self.view.addNewRow)
+        buttonLayout.addWidget(self.newButton)
 
-        removeButton = QPushButton("Remove")
-        removeButton.clicked.connect(self.view.removeOneRow)
-        buttonLayout.addWidget(removeButton)
+        self.removeButton = QPushButton("Remove")
+        self.removeButton.clicked.connect(self.view.removeOneRow)
+        buttonLayout.addWidget(self.removeButton)
 
-        editButton = QPushButton("Edit")
-        editButton.clicked.connect(self.__createSubwindow)
-        buttonLayout.addWidget(editButton)
+        self.editButton = QPushButton("Edit")
+        self.editButton.clicked.connect(self.__createSubwindow)
+        buttonLayout.addWidget(self.editButton)
 
         self.view.signal.connect(self.__clickedRemoveButton)
 
@@ -67,7 +67,7 @@ class DatabaseClient(QWidget):
                 continue
         self.view.showTable(self.table)
         self.__postRequest(data)
-        self.__sendImage(data["binary_photo"])
+        # self.__sendImage(data["binary_photo"])
 
     @pyqtSlot()
     def __clickedRemoveButton(self):
@@ -84,11 +84,12 @@ class DatabaseClient(QWidget):
             if currentRow < len(self.view.data):
                 if self.view.data[currentRow]["photo"]:
                     path = self.view.data[currentRow]["photo"]
+                    image_bytes = self.view.data[currentRow]["binary_photo"]
                 else:
                     path = ""
                 for i in range(len(selected)):
                     cells.update({fields[i]: self.view.selectedItems()[i].text()})
-                    cells.update({"photo": path})
+                    cells.update({"photo": path, "binary_photo": image_bytes})
             else:
                 cells = {"name": "", "year": "", "photo": "", "course": "", "group": ""}
             self.subwindow = TextEdit(cells, currentRow)
@@ -103,8 +104,8 @@ class DatabaseClient(QWidget):
         hdrs = {"Content-Type": "application/json; charset=utf-8", "Accept": "application/json"}
         req = requests.post(self.host + "/post-data", json=new_data, headers=hdrs)
 
-    def __sendImage(self, image):
-        req = requests.post(url=self.host, json={'binary_photo': image})
+    # def __sendImage(self, image):
+    #     req = requests.post(url=self.host, json={'binary_photo': image})
 
     def __deleteRequest(self, data):
         req = requests.delete(self.host + "/delete-data", json=data)
