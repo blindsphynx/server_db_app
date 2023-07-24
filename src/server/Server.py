@@ -1,4 +1,3 @@
-from PyQt5.QtCore import QDir
 from PyQt5.QtWidgets import QMessageBox
 from flask import Flask, request, jsonify
 import psycopg2
@@ -7,14 +6,21 @@ import json
 import os
 import logging
 from utils import auth_required
+import configparser
 
 
 server = Flask(__name__)
 
 DBconnection = [None]
 DBcursor = [None]
-logging.basicConfig(level=logging.DEBUG, filename="server.log", filemode="w",
-                    encoding="utf-8", format="%(asctime)s %(levelname)s %(message)s")
+
+config = configparser.ConfigParser()
+config.read('settings.ini')
+log_level = config.get('section_log', 'level')
+file = config.get('section_log', 'filename')
+mode = config.get('section_log', 'filemode')
+encoding = config.get('section_log', 'encoding')
+logging.basicConfig(level=log_level, filename=file, filemode=mode, encoding=encoding)
 
 
 @server.route("/")

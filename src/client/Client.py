@@ -1,13 +1,20 @@
 from PyQt5.QtCore import pyqtSlot, pyqtSignal
-from PyQt5.QtWidgets import QVBoxLayout, QPushButton, QWidget, QHBoxLayout, QLineEdit
+from PyQt5.QtWidgets import QVBoxLayout, QPushButton, QWidget, QHBoxLayout, QLineEdit, QLabel
 import requests
 from requests.auth import HTTPBasicAuth
 import json
 from TableWidget import MyTable
 from TextEditWidget import TextEdit
 import logging
+import configparser
 
 
+config = configparser.ConfigParser()
+config.read('settings.ini')
+log_level = config.get('section_log', 'level')
+file = config.get('section_log', 'filename')
+mode = config.get('section_log', 'filemode')
+encoding = config.get('section_log', 'encoding')
 logging.basicConfig(level=logging.DEBUG, filename="client.log", filemode="w",
                     encoding="utf-8", format="%(asctime)s %(levelname)s %(message)s")
 
@@ -21,16 +28,17 @@ class DatabaseClient(QWidget):
         self.setWindowTitle("Database Students")
         self.resize(600, 400)
         self.host = "http://localhost:8000/"
-
         self.__authentification()
 
         mainLayout = QHBoxLayout()
         commonLayout = QVBoxLayout()
-        filter_layout = QVBoxLayout()
+        filter_layout = QHBoxLayout()
 
-        self.edit = QLineEdit()
-        self.edit.textChanged.connect(self.filter)
-        filter_layout.addWidget(self.edit)
+        self.search_bar = QLineEdit()
+        label = QLabel("Search: ")
+        self.search_bar.textChanged.connect(self.filter)
+        filter_layout.addWidget(label)
+        filter_layout.addWidget(self.search_bar)
         commonLayout.addLayout(filter_layout)
 
         self.table = self.__getRequest().json()
@@ -70,8 +78,8 @@ class DatabaseClient(QWidget):
 
     def __authentification(self):
         response = requests.get(self.host, auth=("user", "pyro127"))
-        print(response.status_code)
-        print(response.text)
+        # print(response.status_code)
+        # print(response.text)
 
     @pyqtSlot()
     def __clickedSaveButton(self):
