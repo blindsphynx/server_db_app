@@ -56,6 +56,7 @@ class MyTable(QTableWidget):
             self.removeRow(self.currentRow())
 
     def showTable(self, newData):
+        self.clearContents()
         self.data = newData
         records = len(self.data)
         for i in range(records):

@@ -1,5 +1,6 @@
 from PyQt5.QtCore import pyqtSlot, pyqtSignal
-from PyQt5.QtWidgets import QVBoxLayout, QPushButton, QWidget, QHBoxLayout, QLineEdit, QLabel
+from PyQt5.QtWidgets import QVBoxLayout, QPushButton, QWidget, QHBoxLayout, QLineEdit, QLabel, QCheckBox, QButtonGroup, \
+    QRadioButton
 import requests
 from requests.auth import HTTPBasicAuth
 import json
@@ -41,9 +42,22 @@ class DatabaseClient(QWidget):
         filter_layout.addWidget(self.search_bar)
         commonLayout.addLayout(filter_layout)
 
-        self.table = self.__getRequest().json()
-        self.view = MyTable(self.table)
+        self.data = self.__getRequest().json()
+        self.view = MyTable(self.data)
         commonLayout.addWidget(self.view)
+
+        button_group = QButtonGroup(self)
+        button_group.setExclusive(True)
+        self.checkbox1 = QRadioButton()
+        self.checkbox1.setText("Only with photo")
+        self.checkbox1.toggled.connect(self.radioButtonPressed)
+        self.checkbox2 = QRadioButton()
+        self.checkbox2.setText("Without photo")
+        self.checkbox2.toggled.connect(self.radioButtonPressed)
+        button_group.addButton(self.checkbox1)
+        commonLayout.addWidget(self.checkbox1)
+        button_group.addButton(self.checkbox2)
+        commonLayout.addWidget(self.checkbox2)
 
         self.setLayout(mainLayout)
         buttonLayout = QVBoxLayout()
@@ -65,6 +79,19 @@ class DatabaseClient(QWidget):
         mainLayout.addLayout(buttonLayout)
         self.setLayout(mainLayout)
 
+    def radioButtonPressed(self):
+        sender = self.sender()
+        newData = []
+        if sender.text() == "Only with photo":
+            for record in self.data:
+                if record["photo"]:
+                    newData.append(record)
+        else:
+            for record in self.data:
+                if record["photo"] == "":
+                    newData.append(record)
+        self.view.showTable(newData)
+
     def filter(self, filter_text):
         for i in range(self.view.rowCount()):
             for j in range(self.view.columnCount()):
@@ -85,15 +112,15 @@ class DatabaseClient(QWidget):
     def __clickedSaveButton(self):
         f = open("save.json")
         data = json.load(f)
-        for i in range(len(self.table)):
-            if data["id"] > len(self.table):
-                self.table.append(data)
+        for i in range(len(self.data)):
+            if data["id"] > len(self.data):
+                self.data.append(data)
                 break
-            if self.table[i]["id"] == data["id"]:
-                self.table[i] = data
+            if self.data[i]["id"] == data["id"]:
+                self.data[i] = data
             else:
                 continue
-        self.view.showTable(self.table)
+        self.view.showTable(self.data)
         self.__postRequest(data)
 
     @pyqtSlot()
