@@ -104,11 +104,12 @@ class DatabaseClient(QWidget):
                 if self.view.data[currentRow]["photo"]:
                     path = self.view.data[currentRow]["photo"]
                     image_bytes = self.view.data[currentRow]["binary_photo"]
+                    cells.update({"photo": path, "binary_photo": image_bytes})
                 else:
                     path = ""
+                    cells.update({"photo": path})
                 for i in range(len(selected)):
                     cells.update({fields[i]: self.view.selectedItems()[i].text()})
-                    cells.update({"photo": path, "binary_photo": image_bytes})
             else:
                 cells = {"name": "", "year": "", "photo": "", "course": "", "group": ""}
             self.subwindow = TextEdit(cells, currentRow)
