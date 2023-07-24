@@ -22,31 +22,35 @@ class TextEdit(QWidget):
         self.editField3 = QLineEdit(self)
         self.editField4 = QLineEdit(self)
 
-        reg_ex_text = QRegExp("\D+")
-        text_validator = QRegExpValidator(reg_ex_text, self.editField1)
-        self.editField1.setValidator(text_validator)
-
-        reg_ex_num = QRegExp("[0-9]+.?")
-        num_validator = QRegExpValidator(reg_ex_num, self.editField2)
-        self.editField2.setValidator(num_validator)
-        self.editField3.setValidator(num_validator)
-        self.editField4.setValidator(num_validator)
-
         self.image = QLabel()
         icon = qta.icon("fa5s.camera", color='blue')
         self.image.setPixmap(icon.pixmap(QSize(24, 24)))
         self.imageName = QLabel(self.cells["photo"])
-        print(self.cells)
         self.saveButton = QPushButton("Save")
         self.cancelButton = QPushButton("Cancel")
         self.uploadImageButton = QPushButton("Upload new photo")
 
         self.__setLayouts()
         self.__setValues()
+        self.__setValidators()
         self.saveButton.clicked.connect(self.__saveButtonClicked)
         self.cancelButton.clicked.connect(self.__cancelButtonClicked)
         self.uploadImageButton.clicked.connect(self.__uploadButtonClicked)
         self.imagePath = ""
+
+    def __setValidators(self):
+        reg_ex_text = QRegExp("\D+")
+        text_validator = QRegExpValidator(reg_ex_text, self.editField1)
+        self.editField1.setValidator(text_validator)
+
+        reg_ex_year = QRegExp("(19[789]\d|20[01]\d)")  # 1970-2019
+        year_validator = QRegExpValidator(reg_ex_year, self.editField2)
+        self.editField2.setValidator(year_validator)
+
+        reg_ex_num = QRegExp("[0-9]{4}")
+        num_validator = QRegExpValidator(reg_ex_num, self.editField3)
+        self.editField3.setValidator(num_validator)
+        self.editField4.setValidator(num_validator)
 
     def __setLayouts(self):
         mainLayout = QVBoxLayout()

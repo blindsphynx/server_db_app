@@ -1,5 +1,5 @@
 from PyQt5.QtCore import pyqtSlot, pyqtSignal
-from PyQt5.QtWidgets import QVBoxLayout, QPushButton, QWidget, QHBoxLayout
+from PyQt5.QtWidgets import QVBoxLayout, QPushButton, QWidget, QHBoxLayout, QLineEdit
 import requests
 from requests.auth import HTTPBasicAuth
 import json
@@ -23,10 +23,19 @@ class DatabaseClient(QWidget):
         self.host = "http://localhost:8000/"
 
         self.__authentification()
+
         mainLayout = QHBoxLayout()
+        commonLayout = QVBoxLayout()
+        filter_layout = QVBoxLayout()
+
+        self.edit = QLineEdit()
+        self.edit.textChanged.connect(self.filter)
+        filter_layout.addWidget(self.edit)
+        commonLayout.addLayout(filter_layout)
+
         self.table = self.__getRequest().json()
         self.view = MyTable(self.table)
-        mainLayout.addWidget(self.view)
+        commonLayout.addWidget(self.view)
 
         self.setLayout(mainLayout)
         buttonLayout = QVBoxLayout()
@@ -44,9 +53,20 @@ class DatabaseClient(QWidget):
         buttonLayout.addWidget(self.editButton)
 
         self.view.signal.connect(self.__clickedRemoveButton)
-
+        mainLayout.addLayout(commonLayout)
         mainLayout.addLayout(buttonLayout)
         self.setLayout(mainLayout)
+
+    def filter(self, filter_text):
+        for i in range(self.view.rowCount()):
+            for j in range(self.view.columnCount()):
+                if j == 2:
+                    continue
+                item = self.view.item(i, j)
+                match = filter_text.lower() not in item.text().lower()
+                self.view.setRowHidden(i, match)
+                if not match:
+                    break
 
     def __authentification(self):
         response = requests.get(self.host, auth=("user", "pyro127"))
@@ -67,7 +87,6 @@ class DatabaseClient(QWidget):
                 continue
         self.view.showTable(self.table)
         self.__postRequest(data)
-        # self.__sendImage(data["binary_photo"])
 
     @pyqtSlot()
     def __clickedRemoveButton(self):
@@ -103,9 +122,6 @@ class DatabaseClient(QWidget):
     def __postRequest(self, new_data):
         hdrs = {"Content-Type": "application/json; charset=utf-8", "Accept": "application/json"}
         req = requests.post(self.host + "/post-data", json=new_data, headers=hdrs)
-
-    # def __sendImage(self, image):
-    #     req = requests.post(url=self.host, json={'binary_photo': image})
 
     def __deleteRequest(self, data):
         req = requests.delete(self.host + "/delete-data", json=data)
