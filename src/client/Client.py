@@ -31,35 +31,56 @@ class DatabaseClient(QWidget):
         self.host = "http://localhost:8000/"
         self.__authentification()
 
-        mainLayout = QHBoxLayout()
-        commonLayout = QVBoxLayout()
-        filter_layout = QHBoxLayout()
-
-        self.search_bar = QLineEdit()
-        label = QLabel("Search: ")
-        self.search_bar.textChanged.connect(self.filter)
-        filter_layout.addWidget(label)
-        filter_layout.addWidget(self.search_bar)
-        commonLayout.addLayout(filter_layout)
-
         self.data = self.__getRequest().json()
         self.view = MyTable(self.data)
-        commonLayout.addWidget(self.view)
 
-        button_group = QButtonGroup(self)
-        button_group.setExclusive(True)
+        self.mainLayout = QHBoxLayout()
+        self.commonLayout = QVBoxLayout()
+        self.filter_layout = QHBoxLayout()
+        self.radioButtonLayout = QHBoxLayout()
+        self.sortByPhoto = QVBoxLayout()
+        self.sortByAlpha = QVBoxLayout()
+        self.search_bar = QLineEdit()
+        self.setLayouts()
+
+    def setLayouts(self):
+        label = QLabel("Search: ")
+        self.search_bar.textChanged.connect(self.filter)
+        self.filter_layout.addWidget(label)
+        self.filter_layout.addWidget(self.search_bar)
+        self.commonLayout.addLayout(self.filter_layout)
+        self.commonLayout.addWidget(self.view)
+
+        button_group1 = QButtonGroup(self)
+        button_group1.setExclusive(True)
+        button_group2 = QButtonGroup(self)
+        button_group2.setExclusive(True)
         self.checkbox1 = QRadioButton()
         self.checkbox1.setText("Only with photo")
-        self.checkbox1.toggled.connect(self.radioButtonPressed)
+        self.checkbox1.toggled.connect(self.radioButtonPhoto)
         self.checkbox2 = QRadioButton()
         self.checkbox2.setText("Without photo")
-        self.checkbox2.toggled.connect(self.radioButtonPressed)
-        button_group.addButton(self.checkbox1)
-        commonLayout.addWidget(self.checkbox1)
-        button_group.addButton(self.checkbox2)
-        commonLayout.addWidget(self.checkbox2)
+        self.checkbox2.toggled.connect(self.radioButtonPhoto)
+        button_group1.addButton(self.checkbox1)
+        self.sortByPhoto.addWidget(self.checkbox1)
+        button_group1.addButton(self.checkbox2)
+        self.sortByPhoto.addWidget(self.checkbox2)
 
-        self.setLayout(mainLayout)
+        self.checkbox3 = QRadioButton()
+        self.checkbox3.setText("In alphabetical order")
+        self.checkbox3.toggled.connect(self.radioButtonAlpha)
+        self.checkbox4 = QRadioButton()
+        self.checkbox4.setText("In reverse alphabetical order")
+        self.checkbox4.toggled.connect(self.radioButtonAlpha)
+        button_group2.addButton(self.checkbox3)
+        self.sortByAlpha.addWidget(self.checkbox3)
+        button_group2.addButton(self.checkbox4)
+        self.sortByAlpha.addWidget(self.checkbox4)
+        self.radioButtonLayout.addLayout(self.sortByPhoto)
+        self.radioButtonLayout.addLayout(self.sortByAlpha)
+        self.commonLayout.addLayout(self.radioButtonLayout)
+
+        self.setLayout(self.mainLayout)
         buttonLayout = QVBoxLayout()
 
         self.newButton = QPushButton("New record")
@@ -75,19 +96,29 @@ class DatabaseClient(QWidget):
         buttonLayout.addWidget(self.editButton)
 
         self.view.signal.connect(self.__clickedRemoveButton)
-        mainLayout.addLayout(commonLayout)
-        mainLayout.addLayout(buttonLayout)
-        self.setLayout(mainLayout)
+        self.mainLayout.addLayout(self.commonLayout)
+        self.mainLayout.addLayout(buttonLayout)
+        self.setLayout(self.mainLayout)
 
-    def radioButtonPressed(self):
+    def radioButtonAlpha(self):
         sender = self.sender()
         newData = []
-        if sender.text() == "Only with photo":
-            for record in self.data:
+        for record in self.data:
+            newData.append(record)
+        if sender.text() == "In alphabetical order":
+            newData = sorted(newData, key=lambda x: x['name'])
+        else:
+            newData = sorted(newData, key=lambda x: x['name'], reverse=True)
+        self.view.showTable(newData)
+
+    def radioButtonPhoto(self):
+        sender = self.sender()
+        newData = []
+        for record in self.data:
+            if sender.text() == "Only with photo":
                 if record["photo"]:
                     newData.append(record)
-        else:
-            for record in self.data:
+            else:
                 if record["photo"] == "":
                     newData.append(record)
         self.view.showTable(newData)

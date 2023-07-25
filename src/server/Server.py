@@ -80,7 +80,6 @@ def delete():
         return "", 204
 
 
-# @server.run(debug=True)
 def connect_to_postgesql(connection, cursor):
     connection[0] = psycopg2.connect(dbname='postgres1', user='user',
                                      password='pyro127', host='localhost', port='5432')
