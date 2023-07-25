@@ -1,3 +1,5 @@
+import base64
+
 from PyQt5.QtCore import pyqtSlot, pyqtSignal
 from PyQt5.QtWidgets import QVBoxLayout, QPushButton, QWidget, QHBoxLayout, QLineEdit, QLabel, QCheckBox, QButtonGroup, \
     QRadioButton
@@ -8,10 +10,14 @@ from TableWidget import MyTable
 from TextEditWidget import TextEdit
 import logging
 import configparser
+from cryptography.fernet import Fernet
 
 
 config = configparser.ConfigParser()
 config.read('settings.ini')
+username = config.get('section_auth', 'username')
+my_password = config.get('section_auth', 'password')
+key = config.get('section_auth', 'key')
 log_level = config.get('section_log', 'level')
 file = config.get('section_log', 'filename')
 mode = config.get('section_log', 'filemode')
@@ -32,14 +38,13 @@ class DatabaseClient(QWidget):
         self.__authentification()
 
         self.data = self.__getRequest().json()
+        self.sortedData = []
         self.view = MyTable(self.data)
 
         self.mainLayout = QHBoxLayout()
         self.commonLayout = QVBoxLayout()
         self.filter_layout = QHBoxLayout()
         self.radioButtonLayout = QHBoxLayout()
-        self.sortByPhoto = QVBoxLayout()
-        self.sortByAlpha = QVBoxLayout()
         self.search_bar = QLineEdit()
         self.setLayouts()
 
@@ -51,34 +56,18 @@ class DatabaseClient(QWidget):
         self.commonLayout.addLayout(self.filter_layout)
         self.commonLayout.addWidget(self.view)
 
-        button_group1 = QButtonGroup(self)
-        button_group1.setExclusive(True)
-        button_group2 = QButtonGroup(self)
-        button_group2.setExclusive(True)
+        button_group = QButtonGroup(self)
+        button_group.setExclusive(True)
         self.checkbox1 = QRadioButton()
         self.checkbox1.setText("Only with photo")
         self.checkbox1.toggled.connect(self.radioButtonPhoto)
         self.checkbox2 = QRadioButton()
         self.checkbox2.setText("Without photo")
         self.checkbox2.toggled.connect(self.radioButtonPhoto)
-        button_group1.addButton(self.checkbox1)
-        self.sortByPhoto.addWidget(self.checkbox1)
-        button_group1.addButton(self.checkbox2)
-        self.sortByPhoto.addWidget(self.checkbox2)
-
-        self.checkbox3 = QRadioButton()
-        self.checkbox3.setText("In alphabetical order")
-        self.checkbox3.toggled.connect(self.radioButtonAlpha)
-        self.checkbox4 = QRadioButton()
-        self.checkbox4.setText("In reverse alphabetical order")
-        self.checkbox4.toggled.connect(self.radioButtonAlpha)
-        button_group2.addButton(self.checkbox3)
-        self.sortByAlpha.addWidget(self.checkbox3)
-        button_group2.addButton(self.checkbox4)
-        self.sortByAlpha.addWidget(self.checkbox4)
-        self.radioButtonLayout.addLayout(self.sortByPhoto)
-        self.radioButtonLayout.addLayout(self.sortByAlpha)
-        self.commonLayout.addLayout(self.radioButtonLayout)
+        button_group.addButton(self.checkbox1)
+        self.commonLayout.addWidget(self.checkbox1)
+        button_group.addButton(self.checkbox2)
+        self.commonLayout.addWidget(self.checkbox2)
 
         self.setLayout(self.mainLayout)
         buttonLayout = QVBoxLayout()
@@ -100,17 +89,6 @@ class DatabaseClient(QWidget):
         self.mainLayout.addLayout(buttonLayout)
         self.setLayout(self.mainLayout)
 
-    def radioButtonAlpha(self):
-        sender = self.sender()
-        newData = []
-        for record in self.data:
-            newData.append(record)
-        if sender.text() == "In alphabetical order":
-            newData = sorted(newData, key=lambda x: x['name'])
-        else:
-            newData = sorted(newData, key=lambda x: x['name'], reverse=True)
-        self.view.showTable(newData)
-
     def radioButtonPhoto(self):
         sender = self.sender()
         newData = []
@@ -121,7 +99,8 @@ class DatabaseClient(QWidget):
             else:
                 if record["photo"] == "":
                     newData.append(record)
-        self.view.showTable(newData)
+        self.sortedData = newData
+        self.view.showTable(self.sortedData)
 
     def filter(self, filter_text):
         for i in range(self.view.rowCount()):
@@ -135,9 +114,12 @@ class DatabaseClient(QWidget):
                     break
 
     def __authentification(self):
-        response = requests.get(self.host, auth=("user", "pyro127"))
-        # print(response.status_code)
-        # print(response.text)
+        key = b'yRIKdydLGHRMmJ-gFdgnhafhd4qi_w8BU2jHsmLP-LM='
+        bytes_password = my_password.encode('ascii')
+        base64_password = base64.b64encode(bytes_password)
+        password = Fernet(key).encrypt(base64_password)
+        response = requests.get(self.host, auth=HTTPBasicAuth(username, password))
+        print(response.request.headers)
 
     @pyqtSlot()
     def __clickedSaveButton(self):

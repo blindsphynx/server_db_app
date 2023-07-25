@@ -1,11 +1,11 @@
 from PyQt5.QtWidgets import QMessageBox
-from flask import Flask, request, jsonify
+from cryptography.fernet import Fernet
+from flask import Flask, request, jsonify, make_response
 import psycopg2
 import base64
 import json
 import os
 import logging
-from utils import auth_required
 import configparser
 
 
@@ -20,16 +20,25 @@ log_level = config.get('section_log', 'level')
 file = config.get('section_log', 'filename')
 mode = config.get('section_log', 'filemode')
 encoding = config.get('section_log', 'encoding')
+username = config.get('section_auth', 'username')
+password = config.get('section_auth', 'password')
+# key = config.get('section_auth', 'key')
 logging.basicConfig(level=log_level, filename=file, filemode=mode, encoding=encoding)
 
 
 @server.route("/")
-@auth_required
 def index():
-    return "<h1>Hello, World!</h1>"
+    key = b'yRIKdydLGHRMmJ-gFdgnhafhd4qi_w8BU2jHsmLP-LM='
+    auth = request.authorization.parameters
+    decode = Fernet(key).decrypt(auth["password"])
+    print(decode == "pyro127")
+    if auth["username"] == username and decode == password:
+        return "<h1>Hello, World!</h1>"
+    else:
+        return make_response("<h1>Access denied!</h1>", 401, {'WWW-Authenticate': 'Basic realm="Login required!"'})
 
 
-@server.route('/')
+@server.route('/home')
 def home():
     return "This is a home page"
 
