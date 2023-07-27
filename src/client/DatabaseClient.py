@@ -1,29 +1,34 @@
-import base64
-
 from PyQt5.QtCore import pyqtSlot, pyqtSignal
-from PyQt5.QtWidgets import QVBoxLayout, QPushButton, QWidget, QHBoxLayout, QLineEdit, QLabel, QCheckBox, QButtonGroup, \
+from PyQt5.QtWidgets import QVBoxLayout, QPushButton, QWidget, QHBoxLayout, QLineEdit, QLabel, QButtonGroup, \
     QRadioButton
 import requests
 from requests.auth import HTTPBasicAuth
 import json
-from TableWidget import MyTable
-from TextEditWidget import TextEdit
+import base64
+from MyTable import MyTable
+from TextEdit import TextEdit
 import logging
 import configparser
 from cryptography.fernet import Fernet
-
 
 config = configparser.ConfigParser()
 config.read('settings.ini')
 username = config.get('section_auth', 'username')
 my_password = config.get('section_auth', 'password')
-key = config.get('section_auth', 'key')
+# key = config.get('section_auth', 'key')
 log_level = config.get('section_log', 'level')
 file = config.get('section_log', 'filename')
 mode = config.get('section_log', 'filemode')
 encoding = config.get('section_log', 'encoding')
-logging.basicConfig(level=logging.DEBUG, filename="client.log", filemode="w",
+logging.basicConfig(level=logging.DEBUG, filename="../client/client.log", filemode="w",
                     encoding="utf-8", format="%(asctime)s %(levelname)s %(message)s")
+
+
+def encode_password(password, key):
+    bytes_password = password.encode('ascii')
+    base64_password = base64.b64encode(bytes_password)
+    encoded_password = Fernet(key).encrypt(base64_password)
+    return encoded_password
 
 
 class DatabaseClient(QWidget):
@@ -46,11 +51,17 @@ class DatabaseClient(QWidget):
         self.filter_layout = QHBoxLayout()
         self.radioButtonLayout = QHBoxLayout()
         self.search_bar = QLineEdit()
+        self.photoFilterButton = QRadioButton()
+        self.photoFilterButton2 = QRadioButton()
+        self.newButton = QPushButton("New record")
+        self.removeButton = QPushButton("Remove")
+        self.editButton = QPushButton("Edit")
+
         self.setLayouts()
 
     def setLayouts(self):
         label = QLabel("Search: ")
-        self.search_bar.textChanged.connect(self.filter)
+        self.search_bar.textChanged.connect(self.findSubstring)
         self.filter_layout.addWidget(label)
         self.filter_layout.addWidget(self.search_bar)
         self.commonLayout.addLayout(self.filter_layout)
@@ -58,29 +69,23 @@ class DatabaseClient(QWidget):
 
         button_group = QButtonGroup(self)
         button_group.setExclusive(True)
-        self.checkbox1 = QRadioButton()
-        self.checkbox1.setText("Only with photo")
-        self.checkbox1.toggled.connect(self.radioButtonPhoto)
-        self.checkbox2 = QRadioButton()
-        self.checkbox2.setText("Without photo")
-        self.checkbox2.toggled.connect(self.radioButtonPhoto)
-        button_group.addButton(self.checkbox1)
-        self.commonLayout.addWidget(self.checkbox1)
-        button_group.addButton(self.checkbox2)
-        self.commonLayout.addWidget(self.checkbox2)
+
+        self.photoFilterButton.setText("Only with photo")
+        self.photoFilterButton.toggled.connect(self.radioButtonPhoto)
+        self.photoFilterButton2.setText("Without photo")
+        self.photoFilterButton2.toggled.connect(self.radioButtonPhoto)
+        button_group.addButton(self.photoFilterButton)
+        self.commonLayout.addWidget(self.photoFilterButton)
+        button_group.addButton(self.photoFilterButton2)
+        self.commonLayout.addWidget(self.photoFilterButton2)
 
         self.setLayout(self.mainLayout)
         buttonLayout = QVBoxLayout()
 
-        self.newButton = QPushButton("New record")
         self.newButton.clicked.connect(self.view.addNewRow)
         buttonLayout.addWidget(self.newButton)
-
-        self.removeButton = QPushButton("Remove")
         self.removeButton.clicked.connect(self.view.removeOneRow)
         buttonLayout.addWidget(self.removeButton)
-
-        self.editButton = QPushButton("Edit")
         self.editButton.clicked.connect(self.__createSubwindow)
         buttonLayout.addWidget(self.editButton)
 
@@ -102,7 +107,7 @@ class DatabaseClient(QWidget):
         self.sortedData = newData
         self.view.showTable(self.sortedData)
 
-    def filter(self, filter_text):
+    def findSubstring(self, filter_text):
         for i in range(self.view.rowCount()):
             for j in range(self.view.columnCount()):
                 if j == 2:
@@ -114,16 +119,16 @@ class DatabaseClient(QWidget):
                     break
 
     def __authentification(self):
-        key = b'yRIKdydLGHRMmJ-gFdgnhafhd4qi_w8BU2jHsmLP-LM='
-        bytes_password = my_password.encode('ascii')
-        base64_password = base64.b64encode(bytes_password)
-        password = Fernet(key).encrypt(base64_password)
+        # self.form = LoginForm()
+        # self.form.show()
+        my_key = b'yRIKdydLGHRMmJ-gFdgnhafhd4qi_w8BU2jHsmLP-LM='
+        password = encode_password(my_password, my_key)
         response = requests.get(self.host, auth=HTTPBasicAuth(username, password))
         print(response.request.headers)
 
     @pyqtSlot()
     def __clickedSaveButton(self):
-        f = open("save.json")
+        f = open("../client/save.json")
         data = json.load(f)
         for i in range(len(self.data)):
             if data["id"] > len(self.data):
@@ -138,7 +143,7 @@ class DatabaseClient(QWidget):
 
     @pyqtSlot()
     def __clickedRemoveButton(self):
-        f = open("delete.json")
+        f = open("../client/delete.json")
         data = json.load(f)
         self.__deleteRequest(data)
 

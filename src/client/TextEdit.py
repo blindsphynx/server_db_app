@@ -124,7 +124,7 @@ class TextEdit(QWidget):
                        "course": self.editField3.text(), "group": self.editField4.text(),
                        "binary_photo": string}
             json_object = json.dumps(newData, indent=4)
-            with open("save.json", "w") as outfile:
+            with open("../client/save.json", "w") as outfile:
                 outfile.write(json_object)
             self.infoMessageBox(title="Saving", message="Data was saved")
             self.signal.emit()
