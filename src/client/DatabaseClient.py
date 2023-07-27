@@ -131,14 +131,13 @@ class DatabaseClient(QWidget):
     @pyqtSlot()
     def __clickedSaveButton(self):
         self.saveData = self.subwindow.newData
-        for i in range(len(self.data)):
-            if self.saveData["id"] > len(self.data):
-                self.data.append(self.saveData)
-                break
-            if self.data[i]["id"] == self.saveData["id"]:
-                self.data[i] = self.saveData
-            else:
-                continue
+        if self.saveData["id"] > len(self.data):
+            self.data.append(self.saveData)
+        else:
+            for i in range(len(self.data)):
+                if self.data[i]["id"] == self.saveData["id"]:
+                    self.data[i] = self.saveData
+                    break
         self.view.showTable(self.data)
         self.__postRequest(self.saveData)
 
