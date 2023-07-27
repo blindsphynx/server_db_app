@@ -45,6 +45,7 @@ class DatabaseClient(QWidget):
         self.data = self.__getRequest().json()
         self.sortedData = []
         self.view = MyTable(self.data)
+        self.saveData = {}
 
         self.mainLayout = QHBoxLayout()
         self.commonLayout = QVBoxLayout()
@@ -56,6 +57,7 @@ class DatabaseClient(QWidget):
         self.newButton = QPushButton("New record")
         self.removeButton = QPushButton("Remove")
         self.editButton = QPushButton("Edit")
+        self.newData = {}
 
         self.setLayouts()
 
@@ -128,24 +130,21 @@ class DatabaseClient(QWidget):
 
     @pyqtSlot()
     def __clickedSaveButton(self):
-        f = open("../client/save.json")
-        data = json.load(f)
+        self.saveData = self.subwindow.newData
         for i in range(len(self.data)):
-            if data["id"] > len(self.data):
-                self.data.append(data)
+            if self.saveData["id"] > len(self.data):
+                self.data.append(self.saveData)
                 break
-            if self.data[i]["id"] == data["id"]:
-                self.data[i] = data
+            if self.data[i]["id"] == self.saveData["id"]:
+                self.data[i] = self.saveData
             else:
                 continue
         self.view.showTable(self.data)
-        self.__postRequest(data)
+        self.__postRequest(self.saveData)
 
     @pyqtSlot()
     def __clickedRemoveButton(self):
-        f = open("../client/delete.json")
-        data = json.load(f)
-        self.__deleteRequest(data)
+        self.__deleteRequest(self.view.deleteData)
 
     def __createSubwindow(self):
         cells = {}
