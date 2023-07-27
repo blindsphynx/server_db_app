@@ -32,12 +32,13 @@ class MyTable(QTableWidget):
         self.setMinimumHeight(500)
         self.setMinimumWidth(700)
         self.showTable(self.data)
+        self.deleteData = {}
 
     def addNewRow(self):
         rowCount = self.rowCount()
-        self.insertRow(rowCount)
+        self.insertRow(self.rowCount())
         for i in range(self.columnCount() - 1):
-            self.setItem(rowCount, i, QTableWidgetItem(" "))
+            self.setItem(rowCount, i, QTableWidgetItem(""))
 
     @pyqtSlot()
     def removeOneRow(self):
@@ -45,12 +46,9 @@ class MyTable(QTableWidget):
         if selected:
             if self.currentRow() < len(self.data):
                 data = self.data[self.currentRow()]
-                newData = {"name": data["name"], "year": data["year"],
-                           "photo": data["photo"], "course": data["course"],
-                           "group": data["group"]}
-                json_object = json.dumps(newData, indent=4)
-                with open("delete.json", "w") as outfile:
-                    outfile.write(json_object)
+                self.deleteData = {"name": data["name"], "year": data["year"],
+                                   "photo": data["photo"], "course": data["course"],
+                                   "group": data["group"]}
                 self.signal.emit()
                 print("remove signal")
             self.removeRow(self.currentRow())

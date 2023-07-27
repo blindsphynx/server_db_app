@@ -1,7 +1,6 @@
 from PyQt5.QtCore import QSize, pyqtSignal, pyqtSlot, QRegExp
 from PyQt5.QtGui import QRegExpValidator
 from PyQt5.QtWidgets import QMessageBox, QFileDialog, QLabel, QHBoxLayout, QVBoxLayout, QPushButton, QLineEdit, QWidget
-import json
 import base64
 import os
 import qtawesome as qta
@@ -17,11 +16,13 @@ class TextEdit(QWidget):
         self.setFixedHeight(400)
         self.cells = cells
         self.row = row + 1
+        self.newData = {}
         self.editField1 = QLineEdit(self)
         self.editField2 = QLineEdit(self)
         self.editField3 = QLineEdit(self)
         self.editField4 = QLineEdit(self)
 
+        self.imagePath = ""
         self.image = QLabel()
         icon = qta.icon("fa5s.camera", color='blue')
         self.image.setPixmap(icon.pixmap(QSize(24, 24)))
@@ -36,7 +37,6 @@ class TextEdit(QWidget):
         self.saveButton.clicked.connect(self.__saveButtonClicked)
         self.cancelButton.clicked.connect(self.__cancelButtonClicked)
         self.uploadImageButton.clicked.connect(self.__uploadButtonClicked)
-        self.imagePath = ""
 
     def __setValidators(self):
         reg_ex_text = QRegExp("\D+")
@@ -116,16 +116,12 @@ class TextEdit(QWidget):
                 with open(self.imagePath, "rb") as img:
                     string = base64.b64encode(img.read()).decode('utf-8')
                 self.imagePath = os.path.basename(self.imagePath)
-            else:
-                self.imagePath = self.cells["photo"]
+            if self.cells["photo"]:
                 string = self.cells["binary_photo"]
-            newData = {"id": self.row, "name": self.editField1.text(),
-                       "year": self.editField2.text(), "photo": self.imagePath,
-                       "course": self.editField3.text(), "group": self.editField4.text(),
-                       "binary_photo": string}
-            json_object = json.dumps(newData, indent=4)
-            with open("save.json", "w") as outfile:
-                outfile.write(json_object)
+            self.newData = {"id": self.row, "name": self.editField1.text(),
+                            "year": self.editField2.text(), "photo": self.imagePath,
+                            "course": self.editField3.text(), "group": self.editField4.text(),
+                            "binary_photo": string}
             self.infoMessageBox(title="Saving", message="Data was saved")
             self.signal.emit()
             print("emit save signal")

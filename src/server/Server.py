@@ -1,15 +1,15 @@
 from PyQt5.QtWidgets import QMessageBox
-from flask import Flask, request, jsonify
+from cryptography.fernet import Fernet
+from flask import Flask, request, jsonify, make_response, session
 import psycopg2
 import base64
 import json
 import os
 import logging
-from utils import auth_required
 import configparser
 
-
 server = Flask(__name__)
+server.secret_key = "27eduQA09"
 
 DBconnection = [None]
 DBcursor = [None]
@@ -20,25 +20,46 @@ log_level = config.get('section_log', 'level')
 file = config.get('section_log', 'filename')
 mode = config.get('section_log', 'filemode')
 encoding = config.get('section_log', 'encoding')
+
+# key = config.get('section_auth', 'key')
 logging.basicConfig(level=log_level, filename=file, filemode=mode, encoding=encoding)
 
 
+def decode_password(encoded_password, key):
+    bytes_password = Fernet(key).decrypt(encoded_password)
+    decoded_password = base64.b64decode(bytes_password)
+    return decoded_password.decode('ascii')
+
+
 @server.route("/")
-@auth_required
 def index():
-    return "<h1>Hello, World!</h1>"
+    session["username"] = config.get('section_auth', 'username')
+    session["password"] = config.get('section_auth', 'password')
+
+    key = b'yRIKdydLGHRMmJ-gFdgnhafhd4qi_w8BU2jHsmLP-LM='
+    auth = request.authorization.parameters
+    client_password = decode_password(auth["password"], key)
+    if auth["username"] == session.get("username") and client_password == session.get("password"):
+        print("auth successful")
+        session["logged"] = True
+        return "<h1>auth successful</h1>"
+    else:
+        print("Access denied")
+        session["logged"] = False
+        return make_response("<h1>Access denied!</h1>", 401, {'WWW-Authenticate': 'Basic realm="Login required!"'})
 
 
-@server.route('/')
+@server.route('/home')
 def home():
     return "This is a home page"
 
 
 @server.route('/get-data')
 def get():
-    query = "SELECT * FROM students"
-    table = readFromDatabase(query, DBcursor)
-    return table, 200
+    # if session["logged"]:
+        query = "SELECT * FROM students"
+        table = readFromDatabase(query, DBcursor)
+        return table, 200
 
 
 @server.route('/post-data', methods=['POST'])

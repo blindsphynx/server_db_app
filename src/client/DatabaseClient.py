@@ -1,23 +1,34 @@
 from PyQt5.QtCore import pyqtSlot, pyqtSignal
-from PyQt5.QtWidgets import QVBoxLayout, QPushButton, QWidget, QHBoxLayout, QLineEdit, QLabel, QCheckBox, QButtonGroup, \
+from PyQt5.QtWidgets import QVBoxLayout, QPushButton, QWidget, QHBoxLayout, QLineEdit, QLabel, QButtonGroup, \
     QRadioButton
 import requests
 from requests.auth import HTTPBasicAuth
 import json
-from TableWidget import MyTable
-from TextEditWidget import TextEdit
+import base64
+from MyTable import MyTable
+from TextEdit import TextEdit
 import logging
 import configparser
-
+from cryptography.fernet import Fernet
 
 config = configparser.ConfigParser()
 config.read('settings.ini')
+username = config.get('section_auth', 'username')
+my_password = config.get('section_auth', 'password')
+# key = config.get('section_auth', 'key')
 log_level = config.get('section_log', 'level')
 file = config.get('section_log', 'filename')
 mode = config.get('section_log', 'filemode')
 encoding = config.get('section_log', 'encoding')
-logging.basicConfig(level=logging.DEBUG, filename="client.log", filemode="w",
+logging.basicConfig(level=logging.DEBUG, filename="../client/client.log", filemode="w",
                     encoding="utf-8", format="%(asctime)s %(levelname)s %(message)s")
+
+
+def encode_password(password, key):
+    bytes_password = password.encode('ascii')
+    base64_password = base64.b64encode(bytes_password)
+    encoded_password = Fernet(key).encrypt(base64_password)
+    return encoded_password
 
 
 class DatabaseClient(QWidget):
@@ -32,66 +43,51 @@ class DatabaseClient(QWidget):
         self.__authentification()
 
         self.data = self.__getRequest().json()
+        self.sortedData = []
         self.view = MyTable(self.data)
+        self.saveData = {}
 
         self.mainLayout = QHBoxLayout()
         self.commonLayout = QVBoxLayout()
         self.filter_layout = QHBoxLayout()
         self.radioButtonLayout = QHBoxLayout()
-        self.sortByPhoto = QVBoxLayout()
-        self.sortByAlpha = QVBoxLayout()
         self.search_bar = QLineEdit()
+        self.photoFilterButton = QRadioButton()
+        self.photoFilterButton2 = QRadioButton()
+        self.newButton = QPushButton("New record")
+        self.removeButton = QPushButton("Remove")
+        self.editButton = QPushButton("Edit")
+        self.newData = {}
+
         self.setLayouts()
 
     def setLayouts(self):
         label = QLabel("Search: ")
-        self.search_bar.textChanged.connect(self.filter)
+        self.search_bar.textChanged.connect(self.findSubstring)
         self.filter_layout.addWidget(label)
         self.filter_layout.addWidget(self.search_bar)
         self.commonLayout.addLayout(self.filter_layout)
         self.commonLayout.addWidget(self.view)
 
-        button_group1 = QButtonGroup(self)
-        button_group1.setExclusive(True)
-        button_group2 = QButtonGroup(self)
-        button_group2.setExclusive(True)
-        self.checkbox1 = QRadioButton()
-        self.checkbox1.setText("Only with photo")
-        self.checkbox1.toggled.connect(self.radioButtonPhoto)
-        self.checkbox2 = QRadioButton()
-        self.checkbox2.setText("Without photo")
-        self.checkbox2.toggled.connect(self.radioButtonPhoto)
-        button_group1.addButton(self.checkbox1)
-        self.sortByPhoto.addWidget(self.checkbox1)
-        button_group1.addButton(self.checkbox2)
-        self.sortByPhoto.addWidget(self.checkbox2)
+        button_group = QButtonGroup(self)
+        button_group.setExclusive(True)
 
-        self.checkbox3 = QRadioButton()
-        self.checkbox3.setText("In alphabetical order")
-        self.checkbox3.toggled.connect(self.radioButtonAlpha)
-        self.checkbox4 = QRadioButton()
-        self.checkbox4.setText("In reverse alphabetical order")
-        self.checkbox4.toggled.connect(self.radioButtonAlpha)
-        button_group2.addButton(self.checkbox3)
-        self.sortByAlpha.addWidget(self.checkbox3)
-        button_group2.addButton(self.checkbox4)
-        self.sortByAlpha.addWidget(self.checkbox4)
-        self.radioButtonLayout.addLayout(self.sortByPhoto)
-        self.radioButtonLayout.addLayout(self.sortByAlpha)
-        self.commonLayout.addLayout(self.radioButtonLayout)
+        self.photoFilterButton.setText("Only with photo")
+        self.photoFilterButton.toggled.connect(self.radioButtonPhoto)
+        self.photoFilterButton2.setText("Without photo")
+        self.photoFilterButton2.toggled.connect(self.radioButtonPhoto)
+        button_group.addButton(self.photoFilterButton)
+        self.commonLayout.addWidget(self.photoFilterButton)
+        button_group.addButton(self.photoFilterButton2)
+        self.commonLayout.addWidget(self.photoFilterButton2)
 
         self.setLayout(self.mainLayout)
         buttonLayout = QVBoxLayout()
 
-        self.newButton = QPushButton("New record")
         self.newButton.clicked.connect(self.view.addNewRow)
         buttonLayout.addWidget(self.newButton)
-
-        self.removeButton = QPushButton("Remove")
         self.removeButton.clicked.connect(self.view.removeOneRow)
         buttonLayout.addWidget(self.removeButton)
-
-        self.editButton = QPushButton("Edit")
         self.editButton.clicked.connect(self.__createSubwindow)
         buttonLayout.addWidget(self.editButton)
 
@@ -99,17 +95,6 @@ class DatabaseClient(QWidget):
         self.mainLayout.addLayout(self.commonLayout)
         self.mainLayout.addLayout(buttonLayout)
         self.setLayout(self.mainLayout)
-
-    def radioButtonAlpha(self):
-        sender = self.sender()
-        newData = []
-        for record in self.data:
-            newData.append(record)
-        if sender.text() == "In alphabetical order":
-            newData = sorted(newData, key=lambda x: x['name'])
-        else:
-            newData = sorted(newData, key=lambda x: x['name'], reverse=True)
-        self.view.showTable(newData)
 
     def radioButtonPhoto(self):
         sender = self.sender()
@@ -121,9 +106,10 @@ class DatabaseClient(QWidget):
             else:
                 if record["photo"] == "":
                     newData.append(record)
-        self.view.showTable(newData)
+        self.sortedData = newData
+        self.view.showTable(self.sortedData)
 
-    def filter(self, filter_text):
+    def findSubstring(self, filter_text):
         for i in range(self.view.rowCount()):
             for j in range(self.view.columnCount()):
                 if j == 2:
@@ -135,30 +121,30 @@ class DatabaseClient(QWidget):
                     break
 
     def __authentification(self):
-        response = requests.get(self.host, auth=("user", "pyro127"))
-        # print(response.status_code)
-        # print(response.text)
+        # self.form = LoginForm()
+        # self.form.show()
+        my_key = b'yRIKdydLGHRMmJ-gFdgnhafhd4qi_w8BU2jHsmLP-LM='
+        password = encode_password(my_password, my_key)
+        response = requests.get(self.host, auth=HTTPBasicAuth(username, password))
+        print(response.request.headers)
 
     @pyqtSlot()
     def __clickedSaveButton(self):
-        f = open("save.json")
-        data = json.load(f)
+        self.saveData = self.subwindow.newData
         for i in range(len(self.data)):
-            if data["id"] > len(self.data):
-                self.data.append(data)
+            if self.saveData["id"] > len(self.data):
+                self.data.append(self.saveData)
                 break
-            if self.data[i]["id"] == data["id"]:
-                self.data[i] = data
+            if self.data[i]["id"] == self.saveData["id"]:
+                self.data[i] = self.saveData
             else:
                 continue
         self.view.showTable(self.data)
-        self.__postRequest(data)
+        self.__postRequest(self.saveData)
 
     @pyqtSlot()
     def __clickedRemoveButton(self):
-        f = open("delete.json")
-        data = json.load(f)
-        self.__deleteRequest(data)
+        self.__deleteRequest(self.view.deleteData)
 
     def __createSubwindow(self):
         cells = {}
