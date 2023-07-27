@@ -58,7 +58,6 @@ class DatabaseClient(QWidget):
         self.removeButton = QPushButton("Remove")
         self.editButton = QPushButton("Edit")
         self.newData = {}
-
         self.setLayouts()
 
     def setLayouts(self):
@@ -100,12 +99,10 @@ class DatabaseClient(QWidget):
         sender = self.sender()
         newData = []
         for record in self.data:
-            if sender.text() == "Only with photo":
-                if record["photo"]:
-                    newData.append(record)
-            else:
-                if record["photo"] == "":
-                    newData.append(record)
+            if sender.text() == "Only with photo" and record["photo"]:
+                newData.append(record)
+            elif sender.text() == "Without photo" and record["photo"] == "":
+                newData.append(record)
         self.sortedData = newData
         self.view.showTable(self.sortedData)
 
@@ -146,26 +143,21 @@ class DatabaseClient(QWidget):
         self.__deleteRequest(self.view.deleteData)
 
     def __createSubwindow(self):
-        cells = {}
-        fields = ["name", "year", "course", "group"]
+        cells = {"name": "", "year": "", "photo": "", "course": "", "group": ""}
         selected = self.view.selectedItems()
         currentRow = self.view.currentRow()
-        if selected:
-            if currentRow < len(self.view.data):
-                if self.view.data[currentRow]["photo"]:
-                    path = self.view.data[currentRow]["photo"]
-                    image_bytes = self.view.data[currentRow]["binary_photo"]
-                    cells.update({"photo": path, "binary_photo": image_bytes})
-                else:
-                    path = ""
-                    cells.update({"photo": path})
-                for i in range(len(selected)):
-                    cells.update({fields[i]: self.view.selectedItems()[i].text()})
-            else:
-                cells = {"name": "", "year": "", "photo": "", "course": "", "group": ""}
-            self.subwindow = TextEdit(cells, currentRow)
-            self.subwindow.signal.connect(self.__clickedSaveButton)
-            self.subwindow.show()
+        if selected and currentRow < len(self.view.data):
+            if self.view.data[currentRow]["photo"]:
+                path = self.view.data[currentRow]["photo"]
+                image_bytes = self.view.data[currentRow]["binary_photo"]
+                cells.update({"photo": path, "binary_photo": image_bytes})
+            cells["name"] = selected[0].text()
+            cells["year"] = selected[1].text()
+            cells["course"] = selected[2].text()
+            cells["group"] = selected[3].text()
+        self.subwindow = TextEdit(cells, currentRow)
+        self.subwindow.signal.connect(self.__clickedSaveButton)
+        self.subwindow.show()
 
     def __getRequest(self):
         req = requests.get(self.host + "/get-data")
