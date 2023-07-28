@@ -12,16 +12,18 @@ import configparser
 from cryptography.fernet import Fernet
 
 config = configparser.ConfigParser()
-config.read('settings.ini')
-# username = config.get('section_auth', 'username')
-# my_password = config.get('section_auth', 'password')
-# key = config.get('section_auth', 'key')
-log_level = config.get('section_log', 'level')
-file = config.get('section_log', 'filename')
-mode = config.get('section_log', 'filemode')
-encoding = config.get('section_log', 'encoding')
+config.read("settings.ini")
+window_title = config.get("section_client", "window_title")
+height = config.getint("section_client", "window_height")
+width = config.getint("section_client", "window_width")
+log_level = config.get("section_log", "level")
+file = config.get("section_log", "filename")
+mode = config.get("section_log", "filemode")
+encoding = config.get("section_log", "encoding")
 logging.basicConfig(level=logging.DEBUG, filename="../client/client.log", filemode="w",
                     encoding="utf-8", format="%(asctime)s %(levelname)s %(message)s")
+with open("secret.enc", "rb") as f:
+    secret = f.read()
 
 
 def encode_password(password, key):
@@ -36,8 +38,8 @@ class DatabaseClient(QWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("Database Students")
-        self.resize(600, 400)
+        self.setWindowTitle(window_title)
+        self.resize(width, height)
         self.host = "http://localhost:8000/"
         self.login = LoginWidget()
         self.login.show()
@@ -120,9 +122,7 @@ class DatabaseClient(QWidget):
     def __authentification(self):
         username = self.login.username.text()
         password = self.login.password.text()
-        print(username, password)
-        my_key = b'yRIKdydLGHRMmJ-gFdgnhafhd4qi_w8BU2jHsmLP-LM='
-        my_password = encode_password(password, my_key)
+        my_password = encode_password(password, secret)
         response = requests.get(self.host, auth=HTTPBasicAuth(username, my_password))
         if response.status_code:
             self.data = self.__getRequest().json()

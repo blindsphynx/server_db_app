@@ -20,9 +20,9 @@ log_level = config.get('section_log', 'level')
 file = config.get('section_log', 'filename')
 mode = config.get('section_log', 'filemode')
 encoding = config.get('section_log', 'encoding')
-
-# key = config.get('section_auth', 'key')
 logging.basicConfig(level=log_level, filename=file, filemode=mode, encoding=encoding)
+with open("secret.enc", "rb") as f:
+    secret = f.read()
 
 
 def decode_password(encoded_password, key):
@@ -35,10 +35,8 @@ def decode_password(encoded_password, key):
 def index():
     session["username"] = config.get('section_auth', 'username')
     session["password"] = config.get('section_auth', 'password')
-
-    key = b'yRIKdydLGHRMmJ-gFdgnhafhd4qi_w8BU2jHsmLP-LM='
     auth = request.authorization.parameters
-    client_password = decode_password(auth["password"], key)
+    client_password = decode_password(auth["password"], secret)
     if auth["username"] == session.get("username") and client_password == session.get("password"):
         print("auth successful")
         session["logged"] = True
