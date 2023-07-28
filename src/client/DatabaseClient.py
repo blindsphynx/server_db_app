@@ -3,18 +3,18 @@ from PyQt5.QtWidgets import QVBoxLayout, QPushButton, QWidget, QHBoxLayout, QLin
     QRadioButton
 import requests
 from requests.auth import HTTPBasicAuth
-import json
 import base64
 from MyTable import MyTable
 from TextEdit import TextEdit
+from LoginWidget import LoginWidget
 import logging
 import configparser
 from cryptography.fernet import Fernet
 
 config = configparser.ConfigParser()
 config.read('settings.ini')
-username = config.get('section_auth', 'username')
-my_password = config.get('section_auth', 'password')
+# username = config.get('section_auth', 'username')
+# my_password = config.get('section_auth', 'password')
 # key = config.get('section_auth', 'key')
 log_level = config.get('section_log', 'level')
 file = config.get('section_log', 'filename')
@@ -36,16 +36,16 @@ class DatabaseClient(QWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.subwindow = None
         self.setWindowTitle("Database Students")
         self.resize(600, 400)
         self.host = "http://localhost:8000/"
-        self.__authentification()
-
-        self.data = self.__getRequest().json()
-        self.sortedData = []
-        self.view = MyTable(self.data)
+        self.login = LoginWidget()
+        self.login.show()
+        self.login.signal.connect(self.__authentification)
         self.saveData = {}
+        self.sortedData = []
+        self.newData = {}
+        self.subwindow = None
 
         self.mainLayout = QHBoxLayout()
         self.commonLayout = QVBoxLayout()
@@ -57,8 +57,7 @@ class DatabaseClient(QWidget):
         self.newButton = QPushButton("New record")
         self.removeButton = QPushButton("Remove")
         self.editButton = QPushButton("Edit")
-        self.newData = {}
-        self.setLayouts()
+        self.data = {}
 
     def setLayouts(self):
         label = QLabel("Search: ")
@@ -117,13 +116,19 @@ class DatabaseClient(QWidget):
                 if not match:
                     break
 
+    @pyqtSlot()
     def __authentification(self):
-        # self.form = LoginForm()
-        # self.form.show()
+        username = self.login.username.text()
+        password = self.login.password.text()
+        print(username, password)
         my_key = b'yRIKdydLGHRMmJ-gFdgnhafhd4qi_w8BU2jHsmLP-LM='
-        password = encode_password(my_password, my_key)
-        response = requests.get(self.host, auth=HTTPBasicAuth(username, password))
-        print(response.request.headers)
+        my_password = encode_password(password, my_key)
+        response = requests.get(self.host, auth=HTTPBasicAuth(username, my_password))
+        if response.status_code:
+            self.data = self.__getRequest().json()
+            self.view = MyTable(self.data)
+            self.setLayouts()
+            self.show()
 
     @pyqtSlot()
     def __clickedSaveButton(self):
