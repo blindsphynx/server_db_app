@@ -16,6 +16,7 @@ config.read("settings.ini")
 window_title = config.get("section_client", "window_title")
 height = config.getint("section_client", "window_height")
 width = config.getint("section_client", "window_width")
+host = config.get("section_client", "host")
 log_level = config.get("section_log", "level")
 file = config.get("section_log", "filename")
 mode = config.get("section_log", "filemode")
@@ -40,7 +41,7 @@ class DatabaseClient(QWidget):
         super().__init__(parent)
         self.setWindowTitle(window_title)
         self.resize(width, height)
-        self.host = "http://localhost:8000/"
+        self.host = host
         self.login = LoginWidget()
         self.login.show()
         self.login.signal.connect(self.__authentification)
