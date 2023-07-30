@@ -1,18 +1,20 @@
+import os.path
+
 from PyQt5.QtCore import pyqtSlot, pyqtSignal
 from PyQt5.QtWidgets import QVBoxLayout, QPushButton, QWidget, QHBoxLayout, QLineEdit, QLabel, QButtonGroup, \
     QRadioButton
 import requests
 from requests.auth import HTTPBasicAuth
 import base64
-from MyTable import MyTable
-from TextEdit import TextEdit
-from LoginWidget import LoginWidget
+from src.client.MyTable import MyTable
+from src.client.TextEdit import TextEdit
+from src.client.LoginWidget import LoginWidget
 import logging
 import configparser
 from cryptography.fernet import Fernet
 
 config = configparser.ConfigParser()
-config.read("settings.ini")
+config.read("/home/vilka/PycharmProjects/http_server_test/src/client/settings.ini")
 window_title = config.get("section_client", "window_title")
 height = config.getint("section_client", "window_height")
 width = config.getint("section_client", "window_width")
@@ -21,9 +23,9 @@ log_level = config.get("section_log", "level")
 file = config.get("section_log", "filename")
 mode = config.get("section_log", "filemode")
 encoding = config.get("section_log", "encoding")
-logging.basicConfig(level=logging.DEBUG, filename="../client/client.log", filemode="w",
+logging.basicConfig(level=logging.DEBUG, filename=file, filemode=mode,
                     encoding="utf-8", format="%(asctime)s %(levelname)s %(message)s")
-with open("secret.enc", "rb") as f:
+with open("/home/vilka/PycharmProjects/http_server_test/src/client/secret.enc", "rb") as f:
     secret = f.read()
 
 

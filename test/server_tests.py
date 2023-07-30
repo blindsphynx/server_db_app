@@ -1,18 +1,7 @@
-import base64
 import unittest
 import requests
-from cryptography.fernet import Fernet
 from requests.auth import HTTPBasicAuth
-# from src.client.DatabaseClient import encode_password, secret, host
-secret = b'yRIKdydLGHRMmJ-gFdgnhafhd4qi_w8BU2jHsmLP-LM='
-host = "http://localhost:8000/"
-
-
-def encode_password(password, key):
-    bytes_password = password.encode('ascii')
-    base64_password = base64.b64encode(bytes_password)
-    encoded_password = Fernet(key).encrypt(base64_password)
-    return encoded_password
+from src.client.DatabaseClient import encode_password, secret, host
 
 
 class TestServer(unittest.TestCase):
