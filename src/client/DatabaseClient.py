@@ -4,17 +4,18 @@ from PyQt5.QtWidgets import QVBoxLayout, QPushButton, QWidget, QHBoxLayout, QLin
 import requests
 from requests.auth import HTTPBasicAuth
 import base64
-from MyTable import MyTable
-from TextEdit import TextEdit
-from LoginWidget import LoginWidget
+from src.client.MyTable import MyTable
+from src.client.TextEdit import TextEdit
+from src.client.LoginWidget import LoginWidget
 import logging
 import configparser
 import os.path
 from cryptography.fernet import Fernet
 
-config = configparser.ConfigParser()
-config.read("settings.ini")
-print(os.path.abspath(os.getcwd()))
+config = configparser.RawConfigParser()
+cur_folder = os.path.dirname(os.path.abspath(__file__))
+ini_file = os.path.join(cur_folder, "settings.ini")
+config.read(ini_file)
 window_title = config.get("section_client", "window_title")
 height = config.getint("section_client", "window_height")
 width = config.getint("section_client", "window_width")
@@ -24,7 +25,9 @@ file = config.get("section_log", "filename")
 mode = config.get("section_log", "filemode")
 encoding = config.get("section_log", "encoding")
 logging.basicConfig(level=logging.DEBUG, filename=file, filemode=mode, encoding=encoding)
-with open("secret.enc", "rb") as f:
+
+secret_path = os.path.join(cur_folder, "secret.enc")
+with open(secret_path, "rb") as f:
     secret = f.read()
 
 

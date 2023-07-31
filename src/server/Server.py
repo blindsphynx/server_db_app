@@ -1,6 +1,3 @@
-import sys
-
-from PyQt5.QtWidgets import QMessageBox, QApplication
 from cryptography.fernet import Fernet
 from flask import Flask, request, jsonify
 import psycopg2
@@ -46,11 +43,10 @@ def index():
     client_password = decode_password(auth["password"], secret)
     for rec in records:
         if client_login == rec[1] and rec[2] == client_password:
-            print("auth successful")
             return "Auth successful", 200
         else:
-            print("Access denied")
-            return "Access denied", 401
+            continue
+    return "Access denied", 401
 
 
 @server.route("/home")
@@ -105,7 +101,7 @@ def delete():
         return "", 204
 
 
-def connect_to_postgesql(connection, cursor):
+def connect_to_postgresql(connection, cursor):
     connection[0] = psycopg2.connect(dbname=database_name, user=database_user,
                                      password=database_password, host=host, port=port)
     connection[0].autocommit = True

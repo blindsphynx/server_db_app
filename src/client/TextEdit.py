@@ -25,7 +25,7 @@ class TextEdit(QWidget):
         self.imagePath = ""
         self.image = QLabel()
         icon = qta.icon("fa5s.camera", color='blue')
-        self.image.setPixmap(icon.pixmap(QSize(24, 24)))
+        self.image.setPixmap(icon.pixmap(QSize(25, 25)))
         self.imageName = QLabel(self.cells["photo"])
         self.saveButton = QPushButton("Save")
         self.cancelButton = QPushButton("Cancel")
@@ -143,3 +143,5 @@ class TextEdit(QWidget):
         image = QFileDialog.getOpenFileName(None, 'OpenFile', '', "Image file(*.jpg)")
         self.imagePath = image[0]
         self.imageName.setText(os.path.basename(self.imagePath))
+        icon = qta.icon("fa.check", color='green')
+        self.image.setPixmap(icon.pixmap(QSize(25, 25)))
