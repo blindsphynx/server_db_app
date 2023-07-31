@@ -1,5 +1,3 @@
-import os.path
-
 from PyQt5.QtCore import pyqtSlot, pyqtSignal
 from PyQt5.QtWidgets import QVBoxLayout, QPushButton, QWidget, QHBoxLayout, QLineEdit, QLabel, QButtonGroup, \
     QRadioButton, QMessageBox
@@ -11,10 +9,12 @@ from TextEdit import TextEdit
 from LoginWidget import LoginWidget
 import logging
 import configparser
+import os.path
 from cryptography.fernet import Fernet
 
 config = configparser.ConfigParser()
-config.read(os.path.abspath(os.getcwd()) + "settings.ini")
+config.read("settings.ini")
+print(os.path.abspath(os.getcwd()))
 window_title = config.get("section_client", "window_title")
 height = config.getint("section_client", "window_height")
 width = config.getint("section_client", "window_width")
@@ -24,7 +24,7 @@ file = config.get("section_log", "filename")
 mode = config.get("section_log", "filemode")
 encoding = config.get("section_log", "encoding")
 logging.basicConfig(level=logging.DEBUG, filename=file, filemode=mode, encoding=encoding)
-with open("/home/vilka/PycharmProjects/http_server_test/src/client/secret.enc", "rb") as f:
+with open("secret.enc", "rb") as f:
     secret = f.read()
 
 

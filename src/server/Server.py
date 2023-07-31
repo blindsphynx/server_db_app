@@ -1,6 +1,8 @@
-from PyQt5.QtWidgets import QMessageBox
+import sys
+
+from PyQt5.QtWidgets import QMessageBox, QApplication
 from cryptography.fernet import Fernet
-from flask import Flask, request, jsonify, make_response, session
+from flask import Flask, request, jsonify
 import psycopg2
 import base64
 import json
@@ -9,13 +11,17 @@ import logging
 import configparser
 
 server = Flask(__name__)
-
 DBconnection = [None]
 DBcursor = [None]
 
 config = configparser.ConfigParser()
 config.read('settings.ini')
 server.secret_key = config.get("section_server", "secret_key")
+database_name = config.get("section_server", "dbname")
+database_user = config.get("section_server", "user")
+database_password = config.get("section_server", "password")
+host = config.get("section_server", "host")
+port = config.get("section_server", "port")
 log_level = config.get('section_log', 'level')
 file = config.get('section_log', 'filename')
 mode = config.get('section_log', 'filemode')
@@ -34,27 +40,20 @@ def decode_password(encoded_password, key):
 @server.route("/")
 def index():
     query = "SELECT * FROM users"
-    connection = psycopg2.connect(dbname='postgres1', user='user',
-                                  password='pyro127', host='localhost', port='5432')
-    cursor = connection.cursor()
-    cursor.execute(query)
-    records = cursor.fetchall()
-    print(records)
+    records = readFromDatabase(query, DBcursor)
     auth = request.authorization.parameters
     client_login = auth["username"]
     client_password = decode_password(auth["password"], secret)
     for rec in records:
         if client_login == rec[1] and rec[2] == client_password:
             print("auth successful")
-            session["logged"] = True
             return "Auth successful", 200
         else:
             print("Access denied")
-            session["logged"] = False
             return "Access denied", 401
 
 
-@server.route('/home')
+@server.route("/home")
 def home():
     return "This is a home page"
 
@@ -62,7 +61,8 @@ def home():
 @server.route('/get-data')
 def get():
     query = "SELECT * FROM students"
-    table = readFromDatabase(query, DBcursor)
+    records = readFromDatabase(query, DBcursor)
+    table = sqlDataToJSON(records)
     return table, 200
 
 
@@ -88,43 +88,28 @@ def post():
                 f"photo='{photo}', course={course}, gruppa={group} WHERE students.id={id_};"
         queryToDatabase(query, DBcursor)
         if photo:
-            binary_photo = new_data['binary_photo']
+            binary_photo = new_data["binary_photo"]
             photo_data = base64.b64decode(binary_photo)
             with open("server_pictures/" + os.path.basename(photo), "wb") as file:
                 file.write(photo_data)
         return jsonify(id=id_, name=name, year=year, picture=photo, course=course, gruppa=group), 201
 
 
-@server.route('/delete-data', methods=['DELETE'])
+@server.route("/delete-data", methods=["DELETE"])
 def delete():
-    if request.method == 'DELETE':
+    if request.method == "DELETE":
         new_data = request.get_json(force=True)
-        name = new_data['name']
+        name = new_data["name"]
         query = f"DELETE FROM students WHERE name='{name}'"
         queryToDatabase(query, DBcursor)
         return "", 204
 
 
 def connect_to_postgesql(connection, cursor):
-    connection[0] = psycopg2.connect(dbname='postgres1', user='user',
-                                     password='pyro127', host='localhost', port='5432')
+    connection[0] = psycopg2.connect(dbname=database_name, user=database_user,
+                                     password=database_password, host=host, port=port)
     connection[0].autocommit = True
     cursor[0] = connection[0].cursor()
-    if connection[0] is None:
-        QMessageBox.critical(
-            None,
-            "Error!",
-            "Unable to connect a database\n\n"
-            "Database Error: %s" % connection[0].DataError().databaseText(),
-        )
-        return False
-    print("[INFO] PostgreSQL connection established")
-    return True
-
-
-def shutdown_DB_connection(connection):
-    connection[0].close()
-    print("[INFO] PostgreSQL connection closed")
 
 
 def queryToDatabase(query, cursor):
@@ -134,7 +119,10 @@ def queryToDatabase(query, cursor):
 
 def readFromDatabase(query, cursor):
     cursor[0].execute(query)
-    records = cursor[0].fetchall()
+    return cursor[0].fetchall()
+
+
+def sqlDataToJSON(records):
     table = []
     for line in records:
         data = {"id": line[0], "name": line[1], "year": line[2], "photo": line[3], "course": line[4], "group": line[5]}

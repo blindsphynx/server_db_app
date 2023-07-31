@@ -24,7 +24,7 @@ class LoginWidget(QWidget):
         layout.addWidget(self.password, 1, 1)
 
         button_login = QPushButton("Log in")
-        button_login.setFixedWidth(60)
+        button_login.setFixedWidth(90)
         button_login.clicked.connect(self.__logInClicked)
         layout.addWidget(button_login, 2, 1, 1, 2)
         layout.setRowMinimumHeight(2, 75)
