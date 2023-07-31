@@ -181,7 +181,7 @@ class DatabaseClient(QWidget):
 
     def __postRequest(self, new_data):
         hdrs = {"Content-Type": "application/json; charset=utf-8", "Accept": "application/json"}
-        req = requests.post(self.host + "/post-data", json=new_data, headers=hdrs)
+        requests.post(self.host + "/post-data", json=new_data, headers=hdrs)
 
     def __deleteRequest(self, data):
         req = requests.delete(self.host + "/delete-data", json=data)

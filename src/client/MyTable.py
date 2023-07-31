@@ -45,9 +45,7 @@ class MyTable(QTableWidget):
         if selected:
             if self.currentRow() < len(self.data):
                 data = self.data[self.currentRow()]
-                self.deleteData = {"name": data["name"], "year": data["year"],
-                                   "photo": data["photo"], "course": data["course"],
-                                   "group": data["group"]}
+                self.deleteData = {"name": data["name"]}
                 self.signal.emit()
                 print("remove signal")
             self.removeRow(self.currentRow())
