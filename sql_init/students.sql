@@ -25,3 +25,15 @@ values(4, 'Ivanov Ivan', 2002, NULL, 2, 211);
 
 insert into students(id, name, year, photo, course, gruppa)
 values(5, 'Petrov Petr', 2002, NULL, 3, 203);
+
+create table if not exists users (
+        id integer primary key,
+        login varchar(255) NOT NULL,
+        password varchar(255) NOT NULL
+);
+
+insert into users (id, login, password)
+values(1, 'admin', 'pass1234');
+
+insert into users (id, login, password)
+values(2, 'teacher', '09876543');

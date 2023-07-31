@@ -8,7 +8,7 @@ class TestServer(unittest.TestCase):
 
     def test_authorize(self):
         username = "admin"
-        password = "pyro127"
+        password = "pass1234"
         my_password = encode_password(password, secret)
         response = requests.get(host, auth=HTTPBasicAuth(username, my_password))
         status_code = response.status_code

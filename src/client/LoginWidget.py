@@ -40,5 +40,5 @@ class LoginWidget(QWidget):
             QMessageBox.critical(
                 None,
                 "Error",
-                "Incorrect username or password"
+                "Empty username or password"
             )

@@ -2,19 +2,19 @@ import os.path
 
 from PyQt5.QtCore import pyqtSlot, pyqtSignal
 from PyQt5.QtWidgets import QVBoxLayout, QPushButton, QWidget, QHBoxLayout, QLineEdit, QLabel, QButtonGroup, \
-    QRadioButton
+    QRadioButton, QMessageBox
 import requests
 from requests.auth import HTTPBasicAuth
 import base64
-from src.client.MyTable import MyTable
-from src.client.TextEdit import TextEdit
-from src.client.LoginWidget import LoginWidget
+from MyTable import MyTable
+from TextEdit import TextEdit
+from LoginWidget import LoginWidget
 import logging
 import configparser
 from cryptography.fernet import Fernet
 
 config = configparser.ConfigParser()
-config.read("/home/vilka/PycharmProjects/http_server_test/src/client/settings.ini")
+config.read(os.path.abspath(os.getcwd()) + "settings.ini")
 window_title = config.get("section_client", "window_title")
 height = config.getint("section_client", "window_height")
 width = config.getint("section_client", "window_width")
@@ -23,8 +23,7 @@ log_level = config.get("section_log", "level")
 file = config.get("section_log", "filename")
 mode = config.get("section_log", "filemode")
 encoding = config.get("section_log", "encoding")
-logging.basicConfig(level=logging.DEBUG, filename=file, filemode=mode,
-                    encoding="utf-8", format="%(asctime)s %(levelname)s %(message)s")
+logging.basicConfig(level=logging.DEBUG, filename=file, filemode=mode, encoding=encoding)
 with open("/home/vilka/PycharmProjects/http_server_test/src/client/secret.enc", "rb") as f:
     secret = f.read()
 
@@ -127,11 +126,17 @@ class DatabaseClient(QWidget):
         password = self.login.password.text()
         my_password = encode_password(password, secret)
         response = requests.get(self.host, auth=HTTPBasicAuth(username, my_password))
-        if response.status_code:
+        if response.status_code == 200:
             self.data = self.__getRequest().json()
             self.view = MyTable(self.data)
             self.setLayouts()
             self.show()
+        else:
+            QMessageBox.critical(
+                None,
+                "Error",
+                "Incorrect username or password"
+            )
 
     @pyqtSlot()
     def __clickedSaveButton(self):

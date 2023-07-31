@@ -9,13 +9,13 @@ import logging
 import configparser
 
 server = Flask(__name__)
-server.secret_key = "27eduQA09"
 
 DBconnection = [None]
 DBcursor = [None]
 
 config = configparser.ConfigParser()
 config.read('settings.ini')
+server.secret_key = config.get("section_server", "secret_key")
 log_level = config.get('section_log', 'level')
 file = config.get('section_log', 'filename')
 mode = config.get('section_log', 'filemode')
@@ -33,18 +33,25 @@ def decode_password(encoded_password, key):
 
 @server.route("/")
 def index():
-    session["username"] = config.get('section_auth', 'username')
-    session["password"] = config.get('section_auth', 'password')
+    query = "SELECT * FROM users"
+    connection = psycopg2.connect(dbname='postgres1', user='user',
+                                  password='pyro127', host='localhost', port='5432')
+    cursor = connection.cursor()
+    cursor.execute(query)
+    records = cursor.fetchall()
+    print(records)
     auth = request.authorization.parameters
+    client_login = auth["username"]
     client_password = decode_password(auth["password"], secret)
-    if auth["username"] == session.get("username") and client_password == session.get("password"):
-        print("auth successful")
-        session["logged"] = True
-        return "<h1>auth successful</h1>"
-    else:
-        print("Access denied")
-        session["logged"] = False
-        return make_response("<h1>Access denied!</h1>", 401, {'WWW-Authenticate': 'Basic realm="Login required!"'})
+    for rec in records:
+        if client_login == rec[1] and rec[2] == client_password:
+            print("auth successful")
+            session["logged"] = True
+            return "Auth successful", 200
+        else:
+            print("Access denied")
+            session["logged"] = False
+            return "Access denied", 401
 
 
 @server.route('/home')
@@ -54,10 +61,9 @@ def home():
 
 @server.route('/get-data')
 def get():
-    # if session["logged"]:
-        query = "SELECT * FROM students"
-        table = readFromDatabase(query, DBcursor)
-        return table, 200
+    query = "SELECT * FROM students"
+    table = readFromDatabase(query, DBcursor)
+    return table, 200
 
 
 @server.route('/post-data', methods=['POST'])
@@ -137,7 +143,6 @@ def readFromDatabase(query, cursor):
                 data[key] = ""
         if data["photo"]:
             path = os.path.curdir + "/server_pictures/" + data["photo"]
-            image = ""
             with open(path, "rb") as img:
                 image = base64.encodebytes(img.read()).decode("utf-8")
             data.update({"binary_photo": image})
