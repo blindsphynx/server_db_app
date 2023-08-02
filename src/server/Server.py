@@ -4,27 +4,28 @@ import psycopg2
 import base64
 import json
 import os
-import logging
+import logging.config
 import configparser
 
 server = Flask(__name__)
 DBconnection = [None]
 DBcursor = [None]
 
-config = configparser.ConfigParser()
-config.read('settings.ini')
+config = configparser.RawConfigParser()
+cur_folder = os.path.dirname(os.path.abspath(__file__))
+ini_file = os.path.join(cur_folder, "settings.ini")
+config.read(ini_file)
+
+logging.config.fileConfig(ini_file)
+logger = logging.getLogger("root")
 server.secret_key = config.get("section_server", "secret_key")
 database_name = config.get("section_server", "dbname")
 database_user = config.get("section_server", "user")
 database_password = config.get("section_server", "password")
 host = config.get("section_server", "host")
 port = config.get("section_server", "port")
-log_level = config.get('section_log', 'level')
-file = config.get('section_log', 'filename')
-mode = config.get('section_log', 'filemode')
-encoding = config.get('section_log', 'encoding')
-logging.basicConfig(level=log_level, filename=file, filemode=mode, encoding=encoding)
-with open("secret.enc", "rb") as f:
+secret_path = os.path.join(cur_folder, "secret.enc")
+with open(secret_path, "rb") as f:
     secret = f.read()
 
 
@@ -43,9 +44,11 @@ def index():
     client_password = decode_password(auth["password"], secret)
     for rec in records:
         if client_login == rec[1] and rec[2] == client_password:
+            logger.info("Client was authenticated")
             return "Auth successful", 200
         else:
             continue
+    logger.info("Authentication failed")
     return "Access denied", 401
 
 
@@ -59,6 +62,7 @@ def get():
     query = "SELECT * FROM students"
     records = readFromDatabase(query, DBcursor)
     table = sqlDataToJSON(records)
+    logger.info("GET request executed")
     return table, 200
 
 
@@ -88,6 +92,7 @@ def post():
             photo_data = base64.b64decode(binary_photo)
             with open("server_pictures/" + os.path.basename(photo), "wb") as file:
                 file.write(photo_data)
+        logger.info("POST request executed")
         return jsonify(id=id_, name=name, year=year, picture=photo, course=course, gruppa=group), 201
 
 
@@ -98,23 +103,28 @@ def delete():
         name = new_data["name"]
         query = f"DELETE FROM students WHERE name='{name}'"
         queryToDatabase(query, DBcursor)
+        logger.info("DELETE request executed")
         return "", 204
 
 
 def connect_to_postgresql(connection, cursor):
-    connection[0] = psycopg2.connect(dbname=database_name, user=database_user,
-                                     password=database_password, host=host, port=port)
-    connection[0].autocommit = True
-    cursor[0] = connection[0].cursor()
+    try:
+        connection[0] = psycopg2.connect(dbname=database_name, user=database_user,
+                                         password=database_password, host=host, port=port)
+        connection[0].autocommit = True
+        cursor[0] = connection[0].cursor()
+    except psycopg2.OperationalError:
+        logger.error("Unable to connect to the database")
 
 
 def queryToDatabase(query, cursor):
     cursor[0].execute(query)
-    print("[INFO] Query was sent to the database")
+    logger.info("Query was sent to the database")
 
 
 def readFromDatabase(query, cursor):
     cursor[0].execute(query)
+    logger.info("Data was received from the database")
     return cursor[0].fetchall()
 
 

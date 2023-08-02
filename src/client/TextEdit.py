@@ -124,7 +124,6 @@ class TextEdit(QWidget):
                             "binary_photo": string}
             self.infoMessageBox(title="Saving", message="Data was saved")
             self.signal.emit()
-            print("emit save signal")
         else:
             QMessageBox.critical(
                 None,
@@ -141,7 +140,8 @@ class TextEdit(QWidget):
 
     def __uploadButtonClicked(self):
         image = QFileDialog.getOpenFileName(None, 'OpenFile', '', "Image file(*.jpg)")
-        self.imagePath = image[0]
-        self.imageName.setText(os.path.basename(self.imagePath))
-        icon = qta.icon("fa.check", color='green')
-        self.image.setPixmap(icon.pixmap(QSize(25, 25)))
+        if image[0]:
+            self.imagePath = image[0]
+            self.imageName.setText(os.path.basename(self.imagePath))
+            icon = qta.icon("fa.check", color='green')
+            self.image.setPixmap(icon.pixmap(QSize(25, 25)))

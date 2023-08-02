@@ -35,7 +35,6 @@ class LoginWidget(QWidget):
     def __logInClicked(self):
         if self.username.text() and self.password.text():
             self.signal.emit()
-            print("emit login signal")
             self.close()
         else:
             QMessageBox.critical(

@@ -47,7 +47,6 @@ class MyTable(QTableWidget):
                 data = self.data[self.currentRow()]
                 self.deleteData = {"name": data["name"]}
                 self.signal.emit()
-                print("remove signal")
             self.removeRow(self.currentRow())
 
     def showTable(self, newData):

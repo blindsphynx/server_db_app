@@ -1,31 +1,31 @@
+import base64
+import configparser
+import logging.config
+import os.path
+
+import requests
 from PyQt5.QtCore import pyqtSlot, pyqtSignal
 from PyQt5.QtWidgets import QVBoxLayout, QPushButton, QWidget, QHBoxLayout, QLineEdit, QLabel, QButtonGroup, \
     QRadioButton, QMessageBox
-import requests
+from cryptography.fernet import Fernet
 from requests.auth import HTTPBasicAuth
-import base64
+
+from src.client.LoginWidget import LoginWidget
 from src.client.MyTable import MyTable
 from src.client.TextEdit import TextEdit
-from src.client.LoginWidget import LoginWidget
-import logging
-import configparser
-import os.path
-from cryptography.fernet import Fernet
 
 config = configparser.RawConfigParser()
 cur_folder = os.path.dirname(os.path.abspath(__file__))
 ini_file = os.path.join(cur_folder, "settings.ini")
 config.read(ini_file)
+
+logging.config.fileConfig(ini_file)
+logger = logging.getLogger("root")
+
 window_title = config.get("section_client", "window_title")
 height = config.getint("section_client", "window_height")
 width = config.getint("section_client", "window_width")
 host = config.get("section_client", "host")
-log_level = config.get("section_log", "level")
-file = config.get("section_log", "filename")
-mode = config.get("section_log", "filemode")
-encoding = config.get("section_log", "encoding")
-logging.basicConfig(level=logging.DEBUG, filename=file, filemode=mode, encoding=encoding)
-
 secret_path = os.path.join(cur_folder, "secret.enc")
 with open(secret_path, "rb") as f:
     secret = f.read()
@@ -140,12 +140,13 @@ class DatabaseClient(QWidget):
                 "Error",
                 "Incorrect username or password"
             )
+            logger.info("Incorrect username or password")
 
     @pyqtSlot()
     def __clickedSaveButton(self):
         self.saveData = self.subwindow.newData
         if self.saveData["id"] > len(self.data):
-            self.data.append(self.saveData)
+            self.data.update(self.saveData)
         else:
             for i in range(len(self.data)):
                 if self.data[i]["id"] == self.saveData["id"]:
@@ -177,12 +178,15 @@ class DatabaseClient(QWidget):
 
     def __getRequest(self):
         req = requests.get(self.host + "/get-data")
+        logger.info("GET request is sent to the server")
         return req
 
     def __postRequest(self, new_data):
         hdrs = {"Content-Type": "application/json; charset=utf-8", "Accept": "application/json"}
         requests.post(self.host + "/post-data", json=new_data, headers=hdrs)
+        logger.info("POST request is sent to the server")
 
     def __deleteRequest(self, data):
         req = requests.delete(self.host + "/delete-data", json=data)
+        logger.info("DELETE request is sent to the server")
         return req
