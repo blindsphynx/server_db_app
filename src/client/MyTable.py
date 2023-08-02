@@ -66,6 +66,8 @@ class MyTable(QTableWidget):
                 group.setFlags(xor(group.flags(), QtCore.Qt.ItemIsEditable))
                 self.setItem(num, 0, name)
                 self.setItem(num, 1, year)
+                self.setItem(num, 3, course)
+                self.setItem(num, 4, group)
                 if self.data[num]["photo"]:
                     item = getImageLabel(self.data[num]["binary_photo"])
                     self.setCellWidget(num, 2, item)
@@ -73,7 +75,5 @@ class MyTable(QTableWidget):
                     item = QTableWidgetItem()
                     item.setFlags(QtCore.Qt.ItemIsEnabled)
                     self.setItem(num, 2, item)
-                self.setItem(num, 3, course)
-                self.setItem(num, 4, group)
                 self.setRowHeight(num, 150)
         self.setColumnWidth(0, 300)

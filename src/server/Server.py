@@ -18,12 +18,14 @@ config.read(ini_file)
 
 logging.config.fileConfig(ini_file)
 logger = logging.getLogger("root")
-server.secret_key = config.get("section_server", "secret_key")
 database_name = config.get("section_server", "dbname")
-database_user = config.get("section_server", "user")
-database_password = config.get("section_server", "password")
+database_user = config.get("section_server", "db_user")
+database_password = config.get("section_server", "db_password")
 host = config.get("section_server", "host")
 port = config.get("section_server", "port")
+
+username = config.get("section_server", "client_username")
+password = config.get("section_server", "client_password")
 secret_path = os.path.join(cur_folder, "secret.enc")
 with open(secret_path, "rb") as f:
     secret = f.read()
@@ -37,17 +39,12 @@ def decode_password(encoded_password, key):
 
 @server.route("/")
 def index():
-    query = "SELECT * FROM users"
-    records = readFromDatabase(query, DBcursor)
     auth = request.authorization.parameters
     client_login = auth["username"]
     client_password = decode_password(auth["password"], secret)
-    for rec in records:
-        if client_login == rec[1] and rec[2] == client_password:
-            logger.info("Client was authenticated")
-            return "Auth successful", 200
-        else:
-            continue
+    if client_login == username and password == client_password:
+        logger.info("Client was authenticated")
+        return "Auth successful", 200
     logger.info("Authentication failed")
     return "Access denied", 401
 

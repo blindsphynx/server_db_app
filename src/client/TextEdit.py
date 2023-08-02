@@ -112,11 +112,13 @@ class TextEdit(QWidget):
     def __saveButtonClicked(self):
         if self.editField1.text():
             string = ""
+            print(self.imagePath)
             if self.imagePath != "":
                 with open(self.imagePath, "rb") as img:
                     string = base64.b64encode(img.read()).decode('utf-8')
                 self.imagePath = os.path.basename(self.imagePath)
-            if self.cells["photo"]:
+            elif self.cells["photo"]:
+                self.imagePath = self.cells["photo"]
                 string = self.cells["binary_photo"]
             self.newData = {"id": self.row, "name": self.editField1.text(),
                             "year": self.editField2.text(), "photo": self.imagePath,

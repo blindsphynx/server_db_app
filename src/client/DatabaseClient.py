@@ -146,7 +146,7 @@ class DatabaseClient(QWidget):
     def __clickedSaveButton(self):
         self.saveData = self.subwindow.newData
         if self.saveData["id"] > len(self.data):
-            self.data.update(self.saveData)
+            self.data.append(self.saveData)
         else:
             for i in range(len(self.data)):
                 if self.data[i]["id"] == self.saveData["id"]:
