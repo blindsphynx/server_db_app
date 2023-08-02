@@ -27,7 +27,7 @@ class TestServer(unittest.TestCase):
     # Добавление новой записи
     def test_addNewRecord(self):
         new_data = {
-            'id': '6',
+            'id': '7',
             'name': 'Losev Egor',
             'year': 2004,
             'photo': '',
@@ -39,7 +39,7 @@ class TestServer(unittest.TestCase):
         server_data = {
             'course': 1,
             'gruppa': 2375,
-            'id': '6',
+            'id': '7',
             'name': 'Losev Egor',
             'picture': '',
             'year': 2004
@@ -49,7 +49,7 @@ class TestServer(unittest.TestCase):
 
     # Удаление записи
     def test_deleteRecord(self):
-        data = {"id": "6", "name": "Losev Egor"}
+        data = {"id": "7", "name": "Losev Egor"}
         server_data = ""
         response = requests.delete(host + "/delete-data", json=data)
         self.assertEqual(response.status_code, 204)
@@ -59,7 +59,7 @@ class TestServer(unittest.TestCase):
     def test_uploadImage(self):
         with open("photo.jpg", "rb") as img:
             string = base64.b64encode(img.read()).decode('utf-8')
-        newData = {"id": 6, "name": "Soldatova Anna",
+        newData = {"id": 7, "name": "Soldatova Anna",
                    "year": 2002, "photo": "photo.jpg",
                    "course": 3, "group": 1234,
                    "binary_photo": string}
@@ -68,7 +68,7 @@ class TestServer(unittest.TestCase):
         server_data = {
             "course": 3,
             "gruppa": 1234,
-            "id": 6,
+            "id": 7,
             "name": "Soldatova Anna",
             "picture": "photo.jpg",
             "year": 2002

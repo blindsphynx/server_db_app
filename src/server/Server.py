@@ -110,6 +110,7 @@ def connect_to_postgresql(connection, cursor):
                                          password=database_password, host=host, port=port)
         connection[0].autocommit = True
         cursor[0] = connection[0].cursor()
+        logger.info("Database connection established")
     except psycopg2.OperationalError:
         logger.error("Unable to connect to the database")
 

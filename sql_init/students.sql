@@ -21,7 +21,10 @@ insert into students(id, name, year, photo, course, gruppa)
 values(3, 'Vtorygina Delia', 2000, 'delia.jpeg', 4, 193);
 
 insert into students(id, name, year, photo, course, gruppa)
-values(4, 'Ivanov Ivan', 2002, 'ivan.jpg', 2, 211);
+values(4, 'Ivanov Ivan', 2003, 'ivan.jpg', 2, 211);
 
 insert into students(id, name, year, photo, course, gruppa)
-values(5, 'Petrov Petr', 2002, NULL, 3, 203);
+values(5, 'Petrov Petr', 2002, 'petr.jpg', 3, 203);
+
+insert into students(id, name, year, photo, course, gruppa)
+values(6, 'Fedorof Yakov', 2003, NULL, 2, 215);
