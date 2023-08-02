@@ -75,5 +75,5 @@ class MyTable(QTableWidget):
                     item = QTableWidgetItem()
                     item.setFlags(QtCore.Qt.ItemIsEnabled)
                     self.setItem(num, 2, item)
-                self.setRowHeight(num, 150)
-        self.setColumnWidth(0, 300)
+                self.setRowHeight(num, 200)
+        self.setColumnWidth(0, 200)
