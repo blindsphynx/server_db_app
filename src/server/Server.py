@@ -1,13 +1,15 @@
-from cryptography.fernet import Fernet
-from flask import Flask, request, jsonify
-import psycopg2
 import base64
-import json
-import os
-import logging.config
 import configparser
+import json
+import logging.config
+import os
+
+import psycopg2
+from flask import Flask, request, jsonify
+from flask_bcrypt import Bcrypt
 
 server = Flask(__name__)
+bcrypt = Bcrypt(server)
 DBconnection = [None]
 DBcursor = [None]
 
@@ -25,24 +27,15 @@ host = config.get("section_server", "host")
 port = config.get("section_server", "port")
 
 username = config.get("section_server", "client_username")
-password = config.get("section_server", "client_password")
-secret_path = os.path.join(cur_folder, "secret.enc")
-with open(secret_path, "rb") as f:
-    secret = f.read()
-
-
-def decode_password(encoded_password, key):
-    bytes_password = Fernet(key).decrypt(encoded_password)
-    decoded_password = base64.b64decode(bytes_password)
-    return decoded_password.decode('ascii')
+hashed_password = config.get("section_server", "hash")
 
 
 @server.route("/")
 def index():
     auth = request.authorization.parameters
     client_login = auth["username"]
-    client_password = decode_password(auth["password"], secret)
-    if client_login == username and password == client_password:
+    client_password = auth["password"]
+    if client_login == username and hashed_password == client_password:
         logger.info("Client was authenticated")
         return "Auth successful", 200
     logger.info("Authentication failed")

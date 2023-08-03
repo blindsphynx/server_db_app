@@ -1,18 +1,17 @@
-import base64
 import configparser
 import logging.config
 import os.path
+import hashlib
 
 import requests
 from PyQt5.QtCore import pyqtSlot, pyqtSignal
 from PyQt5.QtWidgets import QVBoxLayout, QPushButton, QWidget, QHBoxLayout, QLineEdit, QLabel, QButtonGroup, \
     QRadioButton, QMessageBox
-from cryptography.fernet import Fernet
 from requests.auth import HTTPBasicAuth
 
-from src.client.LoginWidget import LoginWidget
-from src.client.MyTable import MyTable
-from src.client.TextEdit import TextEdit
+from LoginWidget import LoginWidget
+from MyTable import MyTable
+from TextEdit import TextEdit
 
 config = configparser.RawConfigParser()
 cur_folder = os.path.dirname(os.path.abspath(__file__))
@@ -26,16 +25,13 @@ window_title = config.get("section_client", "window_title")
 height = config.getint("section_client", "window_height")
 width = config.getint("section_client", "window_width")
 host = config.get("section_client", "host")
-secret_path = os.path.join(cur_folder, "secret.enc")
-with open(secret_path, "rb") as f:
-    secret = f.read()
+salt = config.get("section_client", "salt")
 
 
-def encode_password(password, key):
-    bytes_password = password.encode('ascii')
-    base64_password = base64.b64encode(bytes_password)
-    encoded_password = Fernet(key).encrypt(base64_password)
-    return encoded_password
+def encode_password(password):
+    salted = password + salt
+    hashed = hashlib.md5(salted.encode())
+    return hashed.hexdigest()
 
 
 class DatabaseClient(QWidget):
@@ -127,7 +123,7 @@ class DatabaseClient(QWidget):
     def __authentification(self):
         username = self.login.username.text()
         password = self.login.password.text()
-        my_password = encode_password(password, secret)
+        my_password = encode_password(password)
         response = requests.get(self.host, auth=HTTPBasicAuth(username, my_password))
         if response.status_code == 200:
             self.data = self.__getRequest().json()
