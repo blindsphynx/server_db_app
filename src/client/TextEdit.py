@@ -112,7 +112,6 @@ class TextEdit(QWidget):
     def __saveButtonClicked(self):
         if self.editField1.text():
             string = ""
-            print(self.imagePath)
             if self.imagePath != "":
                 with open(self.imagePath, "rb") as img:
                     string = base64.b64encode(img.read()).decode('utf-8')

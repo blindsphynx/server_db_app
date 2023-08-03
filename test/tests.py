@@ -2,6 +2,7 @@ import base64
 import os
 import unittest
 import requests
+from flask import jsonify
 from requests.auth import HTTPBasicAuth
 from src.client.DatabaseClient import encode_password, secret, host
 
@@ -65,16 +66,14 @@ class TestServer(unittest.TestCase):
                    "binary_photo": string}
         hdrs = {"Content-Type": "application/json; charset=utf-8", "Accept": "application/json"}
         response = requests.post(host + "/post-data", json=newData, headers=hdrs)
-        server_data = {
-            "course": 3,
-            "gruppa": 1234,
-            "id": 7,
-            "name": "Soldatova Anna",
-            "picture": "photo.jpg",
-            "year": 2002
-        }
-        # self.assertEqual(response.text, server_data)
-        # self.assertEqual(response.status_code, 201)
+        server_data = {'course': 3,
+                       'gruppa': 1234,
+                       'id': 7,
+                       'name': 'Soldatova Anna',
+                       'picture': 'photo.jpg',
+                       'year': 2002}
+        self.assertEqual(response.json(), server_data)
+        self.assertEqual(response.status_code, 201)
 
 
 if __name__ == '__main__':
