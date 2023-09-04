@@ -64,8 +64,8 @@ def post_data(data):
     if photo:
         binary_photo = data["binary_photo"]
         photo_data = base64.b64decode(binary_photo)
-        with open("server_pictures/" + os.path.basename(photo), "wb") as file:
-            file.write(photo_data)
+        # with open("server_pictures/" + os.path.basename(photo), "wb") as file:
+        #     file.write(photo_data)
     logger.info("POST request executed")
     return jsonify(id=id_, name=name, year=year, picture=photo, course=course, gruppa=group), 201
 
@@ -154,11 +154,11 @@ def sqlDataToJSON(records):
         for key in data:
             if data[key] is None:
                 data[key] = ""
-        if data["photo"]:
-            path = os.path.curdir + "/server_pictures/" + data["photo"]
-            with open(path, "rb") as img:
-                image = base64.encodebytes(img.read()).decode("utf-8")
-            data.update({"binary_photo": image})
+        # if data["photo"]:
+        #     path = os.path.curdir + "/server_pictures/" + data["photo"]
+        #     with open(path, "rb") as img:
+        #         image = base64.encodebytes(img.read()).decode("utf-8")
+        #     data.update({"binary_photo": image})
         table.append(data)
     result = json.dumps(table)
     return result

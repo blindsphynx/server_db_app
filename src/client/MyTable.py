@@ -28,7 +28,7 @@ class MyTable(QTableWidget):
         self.setHorizontalHeaderLabels(["Name", "Year", "Photo", "Course", "Group"])
         self.data = tableData
         self.setSelectionBehavior(QAbstractItemView.SelectRows)
-        self.setMinimumHeight(500)
+        self.setMinimumHeight(400)
         self.setMinimumWidth(700)
         self.showTable(self.data)
         self.deleteData = {}
@@ -68,17 +68,17 @@ class MyTable(QTableWidget):
                 self.setItem(num, 1, year)
                 self.setItem(num, 3, course)
                 self.setItem(num, 4, group)
-                if self.data[num]["photo"]:
-                    pic_frmt = ""
-                    if ".jpg" or ".jpeg" in self.data[num]["photo"]:
-                        pic_frmt = "jpg"
-                    if ".png" in self.data[num]["photo"]:
-                        pic_frmt = "png"
-                    item = getImageLabel(self.data[num]["binary_photo"], pic_format=pic_frmt)
-                    self.setCellWidget(num, 2, item)
-                else:
-                    item = QTableWidgetItem()
-                    item.setFlags(QtCore.Qt.ItemIsEnabled)
-                    self.setItem(num, 2, item)
-                self.setRowHeight(num, 200)
+                # if self.data[num]["photo"]:
+                #     pic_frmt = ""
+                #     if ".jpg" or ".jpeg" in self.data[num]["photo"]:
+                #         pic_frmt = "jpg"
+                #     if ".png" in self.data[num]["photo"]:
+                #         pic_frmt = "png"
+                #     item = getImageLabel(self.data[num]["binary_photo"], pic_format=pic_frmt)
+                #     self.setCellWidget(num, 2, item)
+                # else:
+                #     item = QTableWidgetItem()
+                #     item.setFlags(QtCore.Qt.ItemIsEnabled)
+                #     self.setItem(num, 2, item)
+                # self.setRowHeight(num, 200)
         self.setColumnWidth(0, 200)
