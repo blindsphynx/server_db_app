@@ -3,39 +3,83 @@ import configparser
 import json
 import logging.config
 import os
-
 import psycopg2
-from flask import Flask, request, jsonify
-from flask_bcrypt import Bcrypt
+from flask import Flask, request, jsonify, g
+from flask_httpauth import HTTPBasicAuth
 
 server = Flask(__name__)
-bcrypt = Bcrypt(server)
+app_context = server.app_context()
+app_context.push()
 DBconnection = [None]
 DBcursor = [None]
-
-config = configparser.RawConfigParser()
 cur_folder = os.path.dirname(os.path.abspath(__file__))
 ini_file = os.path.join(cur_folder, "settings.ini")
-config.read(ini_file)
+
+
+def get_config_parser():
+    config_parser = getattr(g, 'config', None)
+    if config_parser is None:
+        config_parser = g.config = configparser.RawConfigParser()
+    return config_parser
+
+
+@server.before_request
+def load():
+    g.config = get_config_parser()
+    g.config.read(ini_file)
+    g.database_name = g.config.get("section_server", "dbname")
+    g.database_user = g.config.get("section_server", "db_user")
+    g.database_password = g.config.get("section_server", "db_password")
+    g.host = g.config.get("section_server", "host")
+    g.port = g.config.get("section_server", "port")
+    g.username = g.config.get("section_server", "client_username")
+    g.hashed_password = g.config.get("section_server", "hash")
+    g.credentials = dict({g.username: g.hashed_password})
+
 
 logging.config.fileConfig(ini_file)
 logger = logging.getLogger("root")
-database_name = config.get("section_server", "dbname")
-database_user = config.get("section_server", "db_user")
-database_password = config.get("section_server", "db_password")
-host = config.get("section_server", "host")
-port = config.get("section_server", "port")
+auth = HTTPBasicAuth()
+load()
 
-username = config.get("section_server", "client_username")
-hashed_password = config.get("section_server", "hash")
+
+def post_data(data):
+    id_ = data['id']
+    name = data['name']
+    photo = data['photo']
+    year = data['year']
+    course = data['course']
+    group = data['group']
+    if year == "":
+        year = "NULL"
+    if course == "":
+        course = "NULL"
+    if group == "":
+        group = "NULL"
+    query = f"INSERT INTO students(id, name, year, photo, course, gruppa) " \
+            f"VALUES({id_}, '{name}', {year}, '{photo}', {course}, {group}) " \
+            f"ON CONFLICT (id) DO UPDATE SET name='{name}', year={year}, " \
+            f"photo='{photo}', course={course}, gruppa={group} WHERE students.id={id_};"
+    queryToDatabase(query, DBcursor)
+    if photo:
+        binary_photo = data["binary_photo"]
+        photo_data = base64.b64decode(binary_photo)
+        with open("server_pictures/" + os.path.basename(photo), "wb") as file:
+            file.write(photo_data)
+    logger.info("POST request executed")
+    return jsonify(id=id_, name=name, year=year, picture=photo, course=course, gruppa=group), 201
+
+
+@auth.verify_password
+def verify_password(user, password):
+    if user in g.credentials and g.credentials.get(user) == password:
+        return user
 
 
 @server.route("/")
+@auth.login_required
 def index():
-    auth = request.authorization.parameters
-    client_login = auth["username"]
-    client_password = auth["password"]
-    if client_login == username and hashed_password == client_password:
+    if auth.current_user():
         logger.info("Client was authenticated")
         return "Auth successful", 200
     logger.info("Authentication failed")
@@ -58,32 +102,16 @@ def get():
 
 @server.route('/post-data', methods=['POST'])
 def post():
-    if request.method == 'POST':
-        new_data = request.get_json(force=True)
-        id_ = new_data['id']
-        name = new_data['name']
-        photo = new_data['photo']
-        year = new_data['year']
-        course = new_data['course']
-        group = new_data['group']
-        if year == "":
-            year = "NULL"
-        if course == "":
-            course = "NULL"
-        if group == "":
-            group = "NULL"
-        query = f"INSERT INTO students(id, name, year, photo, course, gruppa) " \
-                f"VALUES({id_}, '{name}', {year}, '{photo}', {course}, {group}) " \
-                f"ON CONFLICT (id) DO UPDATE SET name='{name}', year={year}, " \
-                f"photo='{photo}', course={course}, gruppa={group} WHERE students.id={id_};"
-        queryToDatabase(query, DBcursor)
-        if photo:
-            binary_photo = new_data["binary_photo"]
-            photo_data = base64.b64decode(binary_photo)
-            with open("server_pictures/" + os.path.basename(photo), "wb") as file:
-                file.write(photo_data)
-        logger.info("POST request executed")
-        return jsonify(id=id_, name=name, year=year, picture=photo, course=course, gruppa=group), 201
+    new_data = request.get_json(force=True)
+    res = post_data(new_data)
+    return res
+
+
+@server.route('/edit-data', methods=['POST'])
+def edit():
+    new_data = request.get_json(force=True)
+    res = post_data(new_data)
+    return res
 
 
 @server.route("/delete-data", methods=["DELETE"])
@@ -99,8 +127,8 @@ def delete():
 
 def connect_to_postgresql(connection, cursor):
     try:
-        connection[0] = psycopg2.connect(dbname=database_name, user=database_user,
-                                         password=database_password, host=host, port=port)
+        connection[0] = psycopg2.connect(dbname=g.database_name, user=g.database_user,
+                                         password=g.database_password, host=g.host, port=g.port)
         connection[0].autocommit = True
         cursor[0] = connection[0].cursor()
         logger.info("Database connection established")
