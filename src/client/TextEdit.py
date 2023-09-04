@@ -37,6 +37,7 @@ class TextEdit(QWidget):
         self.saveButton.clicked.connect(self.__saveButtonClicked)
         self.cancelButton.clicked.connect(self.__cancelButtonClicked)
         self.uploadImageButton.clicked.connect(self.__uploadButtonClicked)
+        self.show()
 
     def __setValidators(self):
         reg_ex_text = QRegExp("\D+")
@@ -133,14 +134,17 @@ class TextEdit(QWidget):
             )
 
     def __cancelButtonClicked(self):
-        self.editField1.setText(self.cells["name"])
-        self.editField2.setText(self.cells["year"])
-        self.editField3.setText(self.cells["course"])
-        self.editField4.setText(self.cells["group"])
+        if self.cells["name"] != "":
+            self.editField1.setText(self.cells["name"])
+            self.editField2.setText(self.cells["year"])
+            self.editField3.setText(self.cells["course"])
+            self.editField4.setText(self.cells["group"])
+        else:
+            self.signal.emit()
         self.infoMessageBox(title="Cancel", message="Changes were canceled")
 
     def __uploadButtonClicked(self):
-        image = QFileDialog.getOpenFileName(None, 'OpenFile', '', "Image file(*.jpg)")
+        image = QFileDialog.getOpenFileName(None, 'OpenFile', '', "Image file(*.jpg) (*.png)")
         if image[0]:
             self.imagePath = image[0]
             self.imageName.setText(os.path.basename(self.imagePath))
