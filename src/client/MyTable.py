@@ -6,13 +6,13 @@ from operator import xor
 import base64
 
 
-def getImageLabel(img):
+def getImageLabel(img, pic_format):
     image = base64.b64decode(img)
     try:
         imglabel = QLabel(" ")
         imglabel.setScaledContents(True)
         pixmap = QPixmap()
-        pixmap.loadFromData(image, 'jpg')
+        pixmap.loadFromData(image, pic_format)
         imglabel.setPixmap(pixmap)
         return imglabel
     except Exception as err:
@@ -69,7 +69,12 @@ class MyTable(QTableWidget):
                 self.setItem(num, 3, course)
                 self.setItem(num, 4, group)
                 if self.data[num]["photo"]:
-                    item = getImageLabel(self.data[num]["binary_photo"])
+                    pic_frmt = ""
+                    if ".jpg" or ".jpeg" in self.data[num]["photo"]:
+                        pic_frmt = "jpg"
+                    if ".png" in self.data[num]["photo"]:
+                        pic_frmt = "png"
+                    item = getImageLabel(self.data[num]["binary_photo"], pic_format=pic_frmt)
                     self.setCellWidget(num, 2, item)
                 else:
                     item = QTableWidgetItem()
