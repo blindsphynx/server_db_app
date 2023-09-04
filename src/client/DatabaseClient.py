@@ -57,6 +57,7 @@ class DatabaseClient(QWidget):
         self.search_bar = QLineEdit()
         self.photoFilterButton = QRadioButton()
         self.photoFilterButton2 = QRadioButton()
+        self.photoFilterButton3 = QRadioButton()
         self.newButton = QPushButton("New record")
         self.removeButton = QPushButton("Remove")
         self.editButton = QPushButton("Edit")
@@ -77,15 +78,19 @@ class DatabaseClient(QWidget):
         self.photoFilterButton.toggled.connect(self.radioButtonPhoto)
         self.photoFilterButton2.setText("Without photo")
         self.photoFilterButton2.toggled.connect(self.radioButtonPhoto)
+        self.photoFilterButton3.setText("All records")
+        self.photoFilterButton3.toggled.connect(self.radioButtonPhoto)
         button_group.addButton(self.photoFilterButton)
         self.commonLayout.addWidget(self.photoFilterButton)
         button_group.addButton(self.photoFilterButton2)
         self.commonLayout.addWidget(self.photoFilterButton2)
+        button_group.addButton(self.photoFilterButton3)
+        self.commonLayout.addWidget(self.photoFilterButton3)
 
         self.setLayout(self.mainLayout)
         buttonLayout = QVBoxLayout()
 
-        self.newButton.clicked.connect(self.view.addNewRow)
+        self.newButton.clicked.connect(self.newRecord)
         buttonLayout.addWidget(self.newButton)
         self.removeButton.clicked.connect(self.view.removeOneRow)
         buttonLayout.addWidget(self.removeButton)
@@ -98,14 +103,16 @@ class DatabaseClient(QWidget):
         self.setLayout(self.mainLayout)
 
     def radioButtonPhoto(self):
+        self.sortedData = []
         sender = self.sender()
-        newData = []
         for record in self.data:
             if sender.text() == "Only with photo" and record["photo"]:
-                newData.append(record)
+                self.sortedData.append(record)
             elif sender.text() == "Without photo" and record["photo"] == "":
-                newData.append(record)
-        self.sortedData = newData
+                self.sortedData.append(record)
+            elif sender.text() == "All records":
+                self.sortedData = self.data
+                break
         self.view.showTable(self.sortedData)
 
     def findSubstring(self, filter_text):
@@ -130,6 +137,7 @@ class DatabaseClient(QWidget):
             self.view = MyTable(self.data)
             self.setLayouts()
             self.show()
+            self.login.close()
         else:
             QMessageBox.critical(
                 None,
@@ -138,39 +146,46 @@ class DatabaseClient(QWidget):
             )
             logger.info("Incorrect username or password")
 
+    def newRecord(self):
+        self.__createSubwindow()
+
     @pyqtSlot()
     def __clickedSaveButton(self):
-        self.saveData = self.subwindow.newData
-        if self.saveData["id"] > len(self.data):
-            self.data.append(self.saveData)
-        else:
-            for i in range(len(self.data)):
-                if self.data[i]["id"] == self.saveData["id"]:
-                    self.data[i] = self.saveData
-                    break
-        self.view.showTable(self.data)
-        self.__postRequest(self.saveData)
+        if self.subwindow.newData:
+            if self.subwindow.newData["id"] > len(self.data):
+                self.data.append(self.subwindow.newData)
+            else:
+                for i in range(len(self.data)):
+                    if self.data[i]["id"] == self.subwindow.newData["id"]:
+                        self.data[i] = self.saveData
+                        break
+            self.data = self.__postRequest(self.subwindow.newData)
+            self.view.showTable(self.data)
 
     @pyqtSlot()
     def __clickedRemoveButton(self):
-        self.__deleteRequest(self.view.deleteData)
+        self.data = self.__deleteRequest(self.view.deleteData)
+        self.view.showTable(self.data)
 
+    @pyqtSlot()
     def __createSubwindow(self):
         cells = {"name": "", "year": "", "photo": "", "course": "", "group": ""}
         selected = self.view.selectedItems()
-        currentRow = self.view.currentRow()
-        if selected and currentRow < len(self.view.data):
-            if self.view.data[currentRow]["photo"]:
-                path = self.view.data[currentRow]["photo"]
-                image_bytes = self.view.data[currentRow]["binary_photo"]
+        self.currentRow = self.view.currentRow()
+        if self.currentRow == -1 and self.sender().text() == "New record":
+            self.subwindow = TextEdit(cells, len(self.view.data) + 1)
+        if selected and self.currentRow < len(self.view.data):
+            if self.view.data[self.currentRow]["photo"]:
+                path = self.view.data[self.currentRow]["photo"]
+                image_bytes = self.view.data[self.currentRow]["binary_photo"]
                 cells.update({"photo": path, "binary_photo": image_bytes})
             cells["name"] = selected[0].text()
             cells["year"] = selected[1].text()
             cells["course"] = selected[2].text()
             cells["group"] = selected[3].text()
-        self.subwindow = TextEdit(cells, currentRow)
-        self.subwindow.signal.connect(self.__clickedSaveButton)
-        self.subwindow.show()
+            self.subwindow = TextEdit(cells, self.currentRow)
+        if self.subwindow is not None:
+            self.subwindow.signal.connect(self.__clickedSaveButton)
 
     def __getRequest(self):
         req = requests.get(self.host + "/get-data")
@@ -181,8 +196,18 @@ class DatabaseClient(QWidget):
         hdrs = {"Content-Type": "application/json; charset=utf-8", "Accept": "application/json"}
         requests.post(self.host + "/post-data", json=new_data, headers=hdrs)
         logger.info("POST request is sent to the server")
+        answer = requests.get(self.host + "/get-data")
+        return answer.json()
+
+    def __editDataRequest(self, new_data):
+        hdrs = {"Content-Type": "application/json; charset=utf-8", "Accept": "application/json"}
+        requests.post(self.host + "/edit-data", json=new_data, headers=hdrs)
+        logger.info("POST request is sent to the server")
+        answer = requests.get(self.host + "/get-data")
+        return answer.json()
 
     def __deleteRequest(self, data):
-        req = requests.delete(self.host + "/delete-data", json=data)
+        requests.delete(self.host + "/delete-data", json=data)
         logger.info("DELETE request is sent to the server")
-        return req
+        answer = requests.get(self.host + "/get-data")
+        return answer.json()
