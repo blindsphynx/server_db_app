@@ -67,17 +67,14 @@ class DatabaseClient(QWidget):
         # self.editButton = QPushButton("Edit")
 
 
-    def setLayouts(self):
+    # def setLayouts(self):
         # label = QLabel("Search: ")
         # self.search_bar.textChanged.connect(self.findSubstring)
         # self.filter_layout.addWidget(label)
         # self.filter_layout.addWidget(self.search_bar)
         # self.commonLayout.addLayout(self.filter_layout)
-
-
         # button_group = QButtonGroup(self)
         # button_group.setExclusive(True)
-
         # self.photoFilterButton.setText("Only with photo")
         # self.photoFilterButton.toggled.connect(self.radioButtonPhoto)
         # self.photoFilterButton2.setText("Without photo")
@@ -101,7 +98,6 @@ class DatabaseClient(QWidget):
         # self.editButton.clicked.connect(self.createSubwindow)
         # buttonLayout.addWidget(self.editButton)
 
-        self.view.signal.connect(self.clickedRemoveButton)
         # self.mainLayout.addLayout(self.commonLayout)
         # self.mainLayout.addLayout(buttonLayout)
         # self.setLayout(self.mainLayout)
@@ -138,7 +134,7 @@ class DatabaseClient(QWidget):
         response = requests.get(self.host, auth=HTTPBasicAuth(username, my_password))
         if response.status_code == 200:
             self.data = self.__getRequest().json()
-            self.setLayouts()
+            # self.setLayouts()
             self.show()
             self.login.close()
             self.view.showTable(self.data)
@@ -179,10 +175,10 @@ class DatabaseClient(QWidget):
         if self.currentRow == -1 and self.sender().text() == "New record":
             self.subwindow = TextEdit(cells, len(self.view.data) + 1)
         if selected and self.currentRow < len(self.view.data):
-            if self.view.data[self.currentRow]["photo"]:
-                path = self.view.data[self.currentRow]["photo"]
-                image_bytes = self.view.data[self.currentRow]["binary_photo"]
-                cells.update({"photo": path, "binary_photo": image_bytes})
+            # if self.view.data[self.currentRow]["photo"]:
+            #     path = self.view.data[self.currentRow]["photo"]
+            #     image_bytes = self.view.data[self.currentRow]["binary_photo"]
+            #     cells.update({"photo": path, "binary_photo": image_bytes})
             cells["name"] = selected[0].text()
             cells["year"] = selected[1].text()
             cells["course"] = selected[2].text()
@@ -201,7 +197,8 @@ class DatabaseClient(QWidget):
         requests.post(self.host + "/post-data", json=new_data, headers=hdrs)
         logger.info("POST request is sent to the server")
         answer = requests.get(self.host + "/get-data")
-        return answer.json()
+        sorted_json = sorted(answer.json(), key=lambda x: x["id"])
+        return sorted_json
 
     def __editDataRequest(self, new_data):
         hdrs = {"Content-Type": "application/json; charset=utf-8", "Accept": "application/json"}
