@@ -11,15 +11,16 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 
 
-class Ui_DatabaseClient(object):
+class Ui_MainWindow(object):
     def setupUi(self, DatabaseClient):
         DatabaseClient.setObjectName("DatabaseClient")
-        DatabaseClient.resize(1000, 600)
         self.horizontalLayoutWidget_2 = QtWidgets.QWidget(DatabaseClient)
-        self.horizontalLayoutWidget_2.setGeometry(QtCore.QRect(0, 0, 1000, 600))
+        self.horizontalLayoutWidget_2.setMinimumWidth(1300)
+        self.horizontalLayoutWidget_2.setMinimumHeight(900)
         self.horizontalLayoutWidget_2.setObjectName("horizontalLayoutWidget_2")
+        self.horizontalLayoutWidget_2.resize(1000, 800)
         self.mainLayout = QtWidgets.QHBoxLayout(self.horizontalLayoutWidget_2)
-        self.mainLayout.setContentsMargins(5, 5, 5, 5)
+        self.mainLayout.setContentsMargins(15, 15, 10, 5)
         self.mainLayout.setObjectName("mainLayout")
         self.commonLayout = QtWidgets.QVBoxLayout()
         self.commonLayout.setObjectName("commonLayout")
@@ -44,6 +45,7 @@ class Ui_DatabaseClient(object):
         self.photoFilterButton2 = QtWidgets.QRadioButton(self.horizontalLayoutWidget_2)
         self.photoFilterButton2.setObjectName("photoFilterButton2")
         self.photoFilterButton2.toggled.connect(DatabaseClient.radioButtonPhoto)
+        self.photoFilterButton2.setChecked(True)
         self.button_group.addButton(self.photoFilterButton2)
         self.commonLayout.addWidget(self.photoFilterButton2)
         self.photoFilterButton3 = QtWidgets.QRadioButton(self.horizontalLayoutWidget_2)
@@ -67,7 +69,6 @@ class Ui_DatabaseClient(object):
         self.editButton.clicked.connect(DatabaseClient.createSubwindow)
         self.buttonLayout.addWidget(self.editButton)
         self.mainLayout.addLayout(self.buttonLayout)
-
         self.retranslateUi(DatabaseClient)
         QtCore.QMetaObject.connectSlotsByName(DatabaseClient)
 
