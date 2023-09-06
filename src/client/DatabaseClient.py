@@ -5,15 +5,13 @@ import hashlib
 
 import requests
 from PyQt5.QtCore import pyqtSlot, pyqtSignal
-from PyQt5.QtWidgets import QVBoxLayout, QPushButton, QWidget, QHBoxLayout, QLineEdit, QLabel, QButtonGroup, \
-    QRadioButton, QMessageBox
+from PyQt5.QtWidgets import QWidget, QMessageBox
 from requests.auth import HTTPBasicAuth
 
 from LoginWidget import LoginWidget
 from MyTable import MyTable
 from TextEdit import TextEdit
 
-from MainWindow import Ui_DatabaseClient
 
 config = configparser.RawConfigParser()
 cur_folder = os.path.dirname(os.path.abspath(__file__))
@@ -42,10 +40,10 @@ class DatabaseClient(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle(window_title)
-        self.resize(width, height)
+        # self.resize(width, height)
+        self.host = host
         self.data = {}
         self.view = MyTable(self.data)
-        self.host = host
         self.login = LoginWidget()
         self.login.show()
         self.login.signal.connect(self.__authentification)
@@ -54,53 +52,6 @@ class DatabaseClient(QWidget):
         self.newData = {}
         self.subwindow = None
 
-        # self.mainLayout = QHBoxLayout()
-        # self.commonLayout = QVBoxLayout()
-        # self.filter_layout = QHBoxLayout()
-        # self.radioButtonLayout = QHBoxLayout()
-        # self.search_bar = QLineEdit()
-        # self.photoFilterButton = QRadioButton()
-        # self.photoFilterButton2 = QRadioButton()
-        # self.photoFilterButton3 = QRadioButton()
-        # self.newButton = QPushButton("New record")
-        # self.removeButton = QPushButton("Remove")
-        # self.editButton = QPushButton("Edit")
-
-
-    # def setLayouts(self):
-        # label = QLabel("Search: ")
-        # self.search_bar.textChanged.connect(self.findSubstring)
-        # self.filter_layout.addWidget(label)
-        # self.filter_layout.addWidget(self.search_bar)
-        # self.commonLayout.addLayout(self.filter_layout)
-        # button_group = QButtonGroup(self)
-        # button_group.setExclusive(True)
-        # self.photoFilterButton.setText("Only with photo")
-        # self.photoFilterButton.toggled.connect(self.radioButtonPhoto)
-        # self.photoFilterButton2.setText("Without photo")
-        # self.photoFilterButton2.toggled.connect(self.radioButtonPhoto)
-        # self.photoFilterButton3.setText("All records")
-        # self.photoFilterButton3.toggled.connect(self.radioButtonPhoto)
-        # button_group.addButton(self.photoFilterButton)
-        # self.commonLayout.addWidget(self.photoFilterButton)
-        # button_group.addButton(self.photoFilterButton2)
-        # self.commonLayout.addWidget(self.photoFilterButton2)
-        # button_group.addButton(self.photoFilterButton3)
-        # self.commonLayout.addWidget(self.photoFilterButton3)
-
-        # self.setLayout(self.mainLayout)
-        # buttonLayout = QVBoxLayout()
-
-        # self.newButton.clicked.connect(self.newRecord)
-        # buttonLayout.addWidget(self.newButton)
-        # self.removeButton.clicked.connect(self.view.removeOneRow)
-        # buttonLayout.addWidget(self.removeButton)
-        # self.editButton.clicked.connect(self.createSubwindow)
-        # buttonLayout.addWidget(self.editButton)
-
-        # self.mainLayout.addLayout(self.commonLayout)
-        # self.mainLayout.addLayout(buttonLayout)
-        # self.setLayout(self.mainLayout)
 
     def radioButtonPhoto(self):
         self.sortedData = []
@@ -134,7 +85,6 @@ class DatabaseClient(QWidget):
         response = requests.get(self.host, auth=HTTPBasicAuth(username, my_password))
         if response.status_code == 200:
             self.data = self.__getRequest().json()
-            # self.setLayouts()
             self.show()
             self.login.close()
             self.view.showTable(self.data)
@@ -147,7 +97,7 @@ class DatabaseClient(QWidget):
             logger.info("Incorrect username or password")
 
     def newRecord(self):
-        self.createSubwindow()
+        self.__createSubwindow()
 
     @pyqtSlot()
     def __clickedSaveButton(self):
@@ -163,7 +113,7 @@ class DatabaseClient(QWidget):
             self.view.showTable(self.data)
 
     @pyqtSlot()
-    def clickedRemoveButton(self):
+    def __clickedRemoveButton(self):
         self.data = self.__deleteRequest(self.view.deleteData)
         self.view.showTable(self.data)
 
@@ -175,10 +125,10 @@ class DatabaseClient(QWidget):
         if self.currentRow == -1 and self.sender().text() == "New record":
             self.subwindow = TextEdit(cells, len(self.view.data) + 1)
         if selected and self.currentRow < len(self.view.data):
-            # if self.view.data[self.currentRow]["photo"]:
-            #     path = self.view.data[self.currentRow]["photo"]
-            #     image_bytes = self.view.data[self.currentRow]["binary_photo"]
-            #     cells.update({"photo": path, "binary_photo": image_bytes})
+            if self.view.data[self.currentRow]["photo"]:
+                path = self.view.data[self.currentRow]["photo"]
+                image_bytes = self.view.data[self.currentRow]["binary_photo"]
+                cells.update({"photo": path, "binary_photo": image_bytes})
             cells["name"] = selected[0].text()
             cells["year"] = selected[1].text()
             cells["course"] = selected[2].text()
@@ -205,7 +155,8 @@ class DatabaseClient(QWidget):
         requests.post(self.host + "/edit-data", json=new_data, headers=hdrs)
         logger.info("POST request is sent to the server")
         answer = requests.get(self.host + "/get-data")
-        return answer.json()
+        sorted_json = sorted(answer.json(), key=lambda x: x["id"])
+        return sorted_json
 
     def __deleteRequest(self, data):
         requests.delete(self.host + "/delete-data", json=data)
