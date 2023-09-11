@@ -10,7 +10,6 @@ from flask_httpauth import HTTPBasicAuth
 server = Flask(__name__)
 app_context = server.app_context()
 app_context.push()
-DBcursor = [None]
 cur_folder = os.path.dirname(os.path.abspath(__file__))
 ini_file = os.path.join(cur_folder, "settings.ini")
 
@@ -50,7 +49,7 @@ logger = logging.getLogger("root")
 auth = HTTPBasicAuth()
 
 
-def post_data(data):
+def post_data(data, cursor):
     id_ = data['id']
     name = data['name']
     photo = data['photo']
@@ -67,8 +66,7 @@ def post_data(data):
             f"VALUES({id_}, '{name}', {year}, '{photo}', {course}, {group}) " \
             f"ON CONFLICT (id) DO UPDATE SET name='{name}', year={year}, " \
             f"photo='{photo}', course={course}, gruppa={group} WHERE students.id={id_};"
-    with app_context:
-        queryToDatabase(query, g.cursor)
+    queryToDatabase(query, cursor)
     if photo:
         binary_photo = data["binary_photo"]
         photo_data = base64.b64decode(binary_photo)
@@ -102,9 +100,9 @@ def home():
 @server.route('/get-data')
 def get():
     query = "SELECT * FROM students"
-    with app_context:
-        records = readFromDatabase(query, g.cursor)
+    records = readFromDatabase(query, g.cursor)
     table = sqlDataToJSON(records)
+    print(table)
     logger.info("GET request executed")
     return table, 200
 
@@ -112,14 +110,15 @@ def get():
 @server.route('/post-data', methods=['POST'])
 def post():
     new_data = request.get_json(force=True)
-    res = post_data(new_data)
+    res = post_data(new_data, g.cursor)
     return res
 
 
 @server.route('/edit-data', methods=['PUT'])
 def edit():
     new_data = request.get_json(force=True)
-    res = post_data(new_data)
+    res = post_data(new_data, g.cursor)
+    print(res)
     return res
 
 
@@ -127,10 +126,10 @@ def edit():
 def delete():
     if request.method == "DELETE":
         new_data = request.get_json(force=True)
+        print(new_data)
         name = new_data["name"]
         query = f"DELETE FROM students WHERE name='{name}'"
-        with app_context:
-            queryToDatabase(query, g.cursor)
+        queryToDatabase(query, g.cursor)
         logger.info("DELETE request executed")
         return "", 204
 
