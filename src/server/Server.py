@@ -39,7 +39,7 @@ def load():
         g.db_connection = psycopg2.connect(dbname=g.database_name, user=g.database_user,
                                            password=g.database_password, host=g.host, port=g.port)
         g.db_connection.autocommit = True
-        DBcursor[0] = g.db_connection.cursor()
+        g.cursor = g.db_connection.cursor()
         logger.info("Database connection established")
     except psycopg2.OperationalError:
         logger.error("Unable to connect to the database")
@@ -67,7 +67,8 @@ def post_data(data):
             f"VALUES({id_}, '{name}', {year}, '{photo}', {course}, {group}) " \
             f"ON CONFLICT (id) DO UPDATE SET name='{name}', year={year}, " \
             f"photo='{photo}', course={course}, gruppa={group} WHERE students.id={id_};"
-    queryToDatabase(query, DBcursor)
+    with app_context:
+        queryToDatabase(query, g.cursor)
     if photo:
         binary_photo = data["binary_photo"]
         photo_data = base64.b64decode(binary_photo)
@@ -101,7 +102,8 @@ def home():
 @server.route('/get-data')
 def get():
     query = "SELECT * FROM students"
-    records = readFromDatabase(query, DBcursor)
+    with app_context:
+        records = readFromDatabase(query, g.cursor)
     table = sqlDataToJSON(records)
     logger.info("GET request executed")
     return table, 200
@@ -127,20 +129,21 @@ def delete():
         new_data = request.get_json(force=True)
         name = new_data["name"]
         query = f"DELETE FROM students WHERE name='{name}'"
-        queryToDatabase(query, DBcursor)
+        with app_context:
+            queryToDatabase(query, g.cursor)
         logger.info("DELETE request executed")
         return "", 204
 
 
 def queryToDatabase(query, cursor):
-    cursor[0].execute(query)
+    cursor.execute(query)
     logger.info("Query was sent to the database")
 
 
 def readFromDatabase(query, cursor):
-    cursor[0].execute(query)
+    cursor.execute(query)
     logger.info("Data was received from the database")
-    return cursor[0].fetchall()
+    return cursor.fetchall()
 
 
 def sqlDataToJSON(records):
