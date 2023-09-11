@@ -4,13 +4,12 @@ import json
 import logging.config
 import os
 import psycopg2
-from flask import Flask, request, jsonify, g, current_app
+from flask import Flask, request, jsonify, g
 from flask_httpauth import HTTPBasicAuth
 
 server = Flask(__name__)
 app_context = server.app_context()
 app_context.push()
-DBconnection = [None]
 DBcursor = [None]
 cur_folder = os.path.dirname(os.path.abspath(__file__))
 ini_file = os.path.join(cur_folder, "settings.ini")
@@ -37,10 +36,10 @@ def load():
     g.credentials = dict({g.username: g.hashed_password})
 
     try:
-        DBconnection[0] = psycopg2.connect(dbname=g.database_name, user=g.database_user,
+        g.db_connection = psycopg2.connect(dbname=g.database_name, user=g.database_user,
                                            password=g.database_password, host=g.host, port=g.port)
-        DBconnection[0].autocommit = True
-        DBcursor[0] = DBconnection[0].cursor()
+        g.db_connection.autocommit = True
+        DBcursor[0] = g.db_connection.cursor()
         logger.info("Database connection established")
     except psycopg2.OperationalError:
         logger.error("Unable to connect to the database")
