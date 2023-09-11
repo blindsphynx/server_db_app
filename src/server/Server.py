@@ -4,7 +4,7 @@ import json
 import logging.config
 import os
 import psycopg2
-from flask import Flask, request, jsonify, g
+from flask import Flask, request, jsonify, g, current_app
 from flask_httpauth import HTTPBasicAuth
 
 server = Flask(__name__)
@@ -36,11 +36,19 @@ def load():
     g.hashed_password = g.config.get("section_server", "hash")
     g.credentials = dict({g.username: g.hashed_password})
 
+    try:
+        DBconnection[0] = psycopg2.connect(dbname=g.database_name, user=g.database_user,
+                                           password=g.database_password, host=g.host, port=g.port)
+        DBconnection[0].autocommit = True
+        DBcursor[0] = DBconnection[0].cursor()
+        logger.info("Database connection established")
+    except psycopg2.OperationalError:
+        logger.error("Unable to connect to the database")
+
 
 logging.config.fileConfig(ini_file)
 logger = logging.getLogger("root")
 auth = HTTPBasicAuth()
-load()
 
 
 def post_data(data):
@@ -107,7 +115,7 @@ def post():
     return res
 
 
-@server.route('/edit-data', methods=['POST'])
+@server.route('/edit-data', methods=['PUT'])
 def edit():
     new_data = request.get_json(force=True)
     res = post_data(new_data)
@@ -123,17 +131,6 @@ def delete():
         queryToDatabase(query, DBcursor)
         logger.info("DELETE request executed")
         return "", 204
-
-
-def connect_to_postgresql(connection, cursor):
-    try:
-        connection[0] = psycopg2.connect(dbname=g.database_name, user=g.database_user,
-                                         password=g.database_password, host=g.host, port=g.port)
-        connection[0].autocommit = True
-        cursor[0] = connection[0].cursor()
-        logger.info("Database connection established")
-    except psycopg2.OperationalError:
-        logger.error("Unable to connect to the database")
 
 
 def queryToDatabase(query, cursor):
