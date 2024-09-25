@@ -1,6 +1,7 @@
 version: "3.9"
 services:
   postgres:
+    container_name: database
     image: postgres:14.8-alpine3.18
     environment:
       POSTGRES_DB: "postgres1"
@@ -8,11 +9,16 @@ services:
       POSTGRES_PASSWORD: "pyro127"
       PGDATA: "/var/lib/postgresql/data/pgdata"
     volumes:
-      - ../sql_init:/docker-entrypoint-initdb.d
+      - ./sql_init:/docker-entrypoint-initdb.d
+    networks:
+      - common-network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     ports:
       - "5432:5432"
 
   server:
+    container_name: server
     build:
       context: .
       dockerfile: Dockerfile
@@ -20,8 +26,8 @@ services:
       - "5000:5000"
     networks:
       - common-network
-
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 networks:
   common-network:
     driver: bridge
-    name: "common-network"

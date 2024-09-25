@@ -78,6 +78,7 @@ def post_data(data, cursor):
 
 @auth.verify_password
 def verify_password(user, password):
+    logger.info("verify_password called")
     if user in g.credentials and g.credentials.get(user) == password:
         return user
 
