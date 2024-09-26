@@ -6,10 +6,9 @@ RUN apt-get update &&  \
     && apt-get install -y python3-pip
 
 RUN git clone https://github.com/blindsphynx/server_db_app.git
-COPY ./ .
+WORKDIR server_db_app/
 RUN pip3 install -r requirements.txt
-
-WORKDIR /src/server
+WORKDIR /server_db_app/src/server
 
 RUN chmod +x main.py
 RUN apt-get autoremove -y && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
